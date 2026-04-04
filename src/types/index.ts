@@ -1,0 +1,74 @@
+const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+export const API_BASE_URL =
+  configuredApiUrl && !/^https?:\/\//.test(configuredApiUrl) ? configuredApiUrl : '/api';
+
+export interface Tenant {
+  id: string;
+  key: string;
+  name: string;
+  apiKey: string;
+  enabled: boolean;
+  createdAt: string;
+}
+
+export interface Assistant {
+  id: string;
+  key: string;
+  name: string;
+  systemPrompt: string | null;
+  model: string;
+  usePredefinedFlows: boolean;
+  tenantId: string | null;
+  userId: string | null;
+  createdAt: string;
+}
+
+export interface NavigationFlow {
+  id: string;
+  assistantId: string;
+  name: string;
+  triggerPhrase: string;
+  steps: FlowStep[];
+  enabled: boolean;
+  createdAt: string;
+}
+
+export interface FlowStep {
+  action: string;
+  target: string;
+  description: string | null;
+}
+
+export interface Tool {
+  id: string;
+  key: string;
+  displayName: string;
+  description: string;
+  inputSchema: Record<string, unknown>;
+  outputSchema: Record<string, unknown> | null;
+  type: 'CLIENT' | 'SERVER_BUILTIN' | 'SERVER_HTTP';
+  version: string;
+  enabled: boolean;
+  executorRef: string | null;
+  defaultArguments: Record<string, unknown> | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export interface Conversation {
+  id: string;
+  assistantId: string;
+  createdAt: string;
+}
+
+export interface Run {
+  id: string;
+  conversationId: string;
+  assistantId: string;
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'WAITING_FOR_CLIENT_TOOL';
+  stepCount: number;
+  lastError: string | null;
+  createdAt: string;
+  completedAt: string | null;
+}

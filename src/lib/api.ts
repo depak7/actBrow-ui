@@ -1,0 +1,81 @@
+import api from './api-client';
+import type { Tenant, Assistant, NavigationFlow, Tool, Conversation, Run } from '@/types';
+
+export const tenantsApi = {
+  list: () => api.get<Tenant[]>('/v1/tenants').then((res) => res.data),
+  get: (id: string) => api.get<Tenant>(`/v1/tenants/${id}`).then((res) => res.data),
+  create: (data: { key: string; name: string; apiKey?: string; enabled: boolean }) =>
+    api.post<Tenant>('/v1/tenants', data).then((res) => res.data),
+  update: (id: string, data: { key: string; name: string; apiKey?: string; enabled: boolean }) =>
+    api.put<Tenant>(`/v1/tenants/${id}`, data).then((res) => res.data),
+  delete: (id: string) => api.delete(`/v1/tenants/${id}`),
+  regenerateKey: (id: string) => api.post<Tenant>(`/v1/tenants/${id}/regenerate-key`).then((res) => res.data),
+  validateKey: (apiKey: string) =>
+    api
+      .post<{
+        valid: boolean;
+        message?: string;
+        userId?: string;
+        email?: string;
+        tenantId?: string;
+        tenantKey?: string;
+      }>('/v1/tenants/validate-key', { apiKey })
+      .then((res) => res.data),
+};
+
+export const assistantsApi = {
+  list: (tenantId?: string) => {
+    const params = tenantId ? { tenantId } : {};
+    return api.get<Assistant[]>('/v1/assistants', { params }).then((res) => res.data);
+  },
+  create: (data: { key: string; name: string; systemPrompt?: string; model: string; usePredefinedFlows: boolean; tenantId?: string }) =>
+    api.post<Assistant>('/v1/assistants', data).then((res) => res.data),
+  update: (id: string, data: { key: string; name: string; systemPrompt?: string; model: string; usePredefinedFlows: boolean; tenantId?: string }) =>
+    api.put<Assistant>(`/v1/assistants/${id}`, data).then((res) => res.data),
+  delete: (id: string) => api.delete(`/v1/assistants/${id}`),
+};
+
+export const flowsApi = {
+  list: (assistantId: string) => api.get<NavigationFlow[]>(`/v1/assistants/${assistantId}/flows`).then((res) => res.data),
+  listEnabled: (assistantId: string) => api.get<NavigationFlow[]>(`/v1/assistants/${assistantId}/flows/enabled`).then((res) => res.data),
+  create: (assistantId: string, data: { name: string; triggerPhrase: string; steps: { action: string; target: string; description?: string }[]; enabled: boolean }) =>
+    api.post<NavigationFlow>(`/v1/assistants/${assistantId}/flows`, data).then((res) => res.data),
+  update: (assistantId: string, flowId: string, data: { name: string; triggerPhrase: string; steps: { action: string; target: string; description?: string }[]; enabled: boolean }) =>
+    api.put<NavigationFlow>(`/v1/assistants/${assistantId}/flows/${flowId}`, data).then((res) => res.data),
+  delete: (assistantId: string, flowId: string) => api.delete(`/v1/assistants/${assistantId}/flows/${flowId}`),
+};
+
+export const toolsApi = {
+  list: () => api.get<Tool[]>('/v1/tools').then((res) => res.data),
+  create: (data: Partial<Tool>) => api.post<Tool>('/v1/tools', data).then((res) => res.data),
+  update: (id: string, data: Partial<Tool>) => api.put<Tool>(`/v1/tools/${id}`, data).then((res) => res.data),
+  delete: (id: string) => api.delete(`/v1/tools/${id}`),
+};
+
+export const assistantToolsApi = {
+  list: (assistantId: string) => api.get<Tool[]>(`/v1/assistants/${assistantId}/tools`).then((res) => res.data),
+  attach: (assistantId: string, toolId: string, defaultArguments?: Record<string, unknown>) =>
+    api.post(`/v1/assistants/${assistantId}/tools`, {
+      toolId,
+      defaultArguments: defaultArguments && Object.keys(defaultArguments).length > 0 ? defaultArguments : {},
+    }),
+  updateBinding: (assistantId: string, toolId: string, defaultArguments: Record<string, unknown>) =>
+    api.put(`/v1/assistants/${assistantId}/tools/${toolId}`, { defaultArguments }),
+  detach: (assistantId: string, toolId: string) =>
+    api.delete(`/v1/assistants/${assistantId}/tools/${toolId}`),
+};
+
+export const conversationsApi = {
+  list: () => api.get<Conversation[]>('/v1/conversations').then((res) => res.data),
+  create: (data: { assistantId: string }) => api.post<Conversation>('/v1/conversations', data).then((res) => res.data),
+  delete: (id: string) => api.delete(`/v1/conversations/${id}`),
+  getMessages: (id: string) => api.get(`/v1/conversations/${id}/messages`).then((res) => res.data),
+};
+
+export const runsApi = {
+  create: (conversationId: string, data: { userContent: string }) =>
+    api.post<Run>(`/v1/conversations/${conversationId}/runs`, data).then((res) => res.data),
+  get: (id: string) => api.get<Run>(`/v1/runs/${id}`).then((res) => res.data),
+  submitToolResult: (runId: string, toolCallId: string, data: { success: boolean; textSummary?: string; structuredOutput?: unknown; error?: string }) =>
+    api.post(`/v1/runs/${runId}/tool-results`, { ...data, toolCallId }),
+};

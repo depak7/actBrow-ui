@@ -1,0 +1,140 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 150 10% 9%;
+    --foreground: 0 0% 98%;
+    --card: 150 10% 12%;
+    --card-foreground: 0 0% 98%;
+    --popover: 150 10% 9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 150 10% 98%;
+    --primary-foreground: 150 10% 9%;
+    --secondary: 150 10% 15%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 150 10% 20%;
+    --muted-foreground: 150 10% 65%;
+    --accent: 150 10% 15%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 150 10% 20%;
+    --input: 150 10% 20%;
+    --ring: 150 10% 80%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Gradient backgrounds */
+.bg-gradient-dark {
+  background: linear-gradient(180deg, 
+    hsl(150 10% 9%) 0%, 
+    hsl(150 10% 11%) 50%, 
+    hsl(150 10% 8%) 100%);
+}
+
+/* Subtle grid background */
+.bg-grid {
+  background-image: 
+    linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* Fade in up animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.animate-fade-in-up-delay-1 {
+  animation: fadeInUp 0.8s ease-out 0.15s forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-up-delay-2 {
+  animation: fadeInUp 0.8s ease-out 0.3s forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-up-delay-3 {
+  animation: fadeInUp 0.8s ease-out 0.45s forwards;
+  opacity: 0;
+}
+
+/* Slide in from left */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.8s ease-out forwards;
+}
+
+/* Slide in from right */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.8s ease-out forwards;
+}
+
+/* Pulse subtle */
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 3s ease-in-out infinite;
+}
+
+/* Card hover effect */
+.card-hover {
+  @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl;
+}
