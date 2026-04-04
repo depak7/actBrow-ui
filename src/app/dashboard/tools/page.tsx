@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type MouseEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -110,7 +110,9 @@ export default function ToolsPage() {
 
   const filteredTools = filter === 'ALL' ? tools : tools.filter(t => t.type === filter);
 
-  const handleTemplateSelect = (template: any) => {
+  const handleTemplateSelect = (template: any, event?: MouseEvent<HTMLButtonElement>) => {
+    event?.preventDefault();
+    event?.stopPropagation();
     setSelectedTemplate(template.key);
     setNewTool({
       key: template.key,
@@ -132,6 +134,10 @@ export default function ToolsPage() {
   const handleCreate = async () => {
     if (!canSubmitCreate) {
       toast({ title: 'Pick a template or custom navigation', variant: 'destructive' });
+      return;
+    }
+    if (!customMode && selectedTemplate && !newTool.key.trim()) {
+      toast({ title: 'Key required', description: 'Set a tool key before saving.', variant: 'destructive' });
       return;
     }
     try {
@@ -163,13 +169,15 @@ export default function ToolsPage() {
       } else {
         await toolsApi.create({
           ...newTool,
+          key: newTool.key.trim(),
+          displayName: newTool.displayName.trim(),
           inputSchema: JSON.parse(newTool.inputSchema),
           outputSchema: newTool.outputSchema ? JSON.parse(newTool.outputSchema) : null,
           defaultArguments: newTool.defaultArguments ? JSON.parse(newTool.defaultArguments) : null,
           metadata: newTool.metadata && newTool.metadata !== '{}' ? JSON.parse(newTool.metadata) : null,
         });
       }
-      toast({ title: 'Success', description: 'Tool created successfully' });
+      toast({ title: 'Success', description: 'Tool saved to catalog' });
       setCreateDialogOpen(false);
       resetCreateDialog();
       const data = await toolsApi.list();
@@ -226,19 +234,23 @@ export default function ToolsPage() {
               <DialogHeader>
                 <DialogTitle className="text-white">Create Tool</DialogTitle>
                 <DialogDescription className="text-neutral-400">
-                  Client presets use in-browser navigation only. HTTP presets are unchanged.
+                  Templates only pre-fill the form—nothing is saved until you click <strong>Create</strong>. Client
+                  presets are in-browser navigation; HTTP presets are unchanged.
                 </DialogDescription>
               </DialogHeader>
 
               {!customMode ? (
                 <div className="py-4">
-                  <h3 className="text-white font-medium mb-4">Client · Navigation</h3>
+                  <h3 className="text-white font-medium mb-1">Client · Navigation templates</h3>
+                  <p className="text-xs text-neutral-500 mb-4">
+                    Pick a starter below to load fields. Adjust the key if needed, then create the catalog tool.
+                  </p>
                   <div className="grid gap-3 mb-6">
                     {TOOL_TEMPLATES.CLIENT.map((template, idx) => (
                       <button
                         type="button"
                         key={idx}
-                        onClick={() => handleTemplateSelect(template)}
+                        onClick={(e) => handleTemplateSelect(template, e)}
                         className={`flex items-start gap-3 p-4 rounded-lg border text-left transition ${
                           selectedTemplate === template.key
                             ? 'border-white/40 bg-white/10'
@@ -254,13 +266,13 @@ export default function ToolsPage() {
                     ))}
                   </div>
 
-                  <h3 className="text-white font-medium mb-4">Server · HTTP</h3>
+                  <h3 className="text-white font-medium mb-4">Server · HTTP templates</h3>
                   <div className="grid gap-3 mb-6">
                     {TOOL_TEMPLATES.SERVER_HTTP.map((template, idx) => (
                       <button
                         type="button"
                         key={idx}
-                        onClick={() => handleTemplateSelect(template)}
+                        onClick={(e) => handleTemplateSelect(template, e)}
                         className={`flex items-start gap-3 p-4 rounded-lg border text-left transition ${
                           selectedTemplate === template.key
                             ? 'border-white/40 bg-white/10'
@@ -275,6 +287,34 @@ export default function ToolsPage() {
                       </button>
                     ))}
                   </div>
+
+                  {selectedTemplate ? (
+                    <div className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+                      <p className="text-sm text-amber-100/90 font-medium">Review before saving to catalog</p>
+                      <p className="text-xs text-neutral-400">
+                        The template only fills these fields. Adjust the key if it already exists, then use{' '}
+                        <span className="text-neutral-200">Save to catalog</span> below.
+                      </p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <div>
+                          <Label className="text-neutral-400 text-xs">Key</Label>
+                          <Input
+                            value={newTool.key}
+                            onChange={(e) => setNewTool({ ...newTool, key: e.target.value })}
+                            className="mt-1 border-white/10 bg-white/5 text-white font-mono text-sm"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-neutral-400 text-xs">Display name</Label>
+                          <Input
+                            value={newTool.displayName}
+                            onChange={(e) => setNewTool({ ...newTool, displayName: e.target.value })}
+                            className="mt-1 border-white/10 bg-white/5 text-white text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
 
                   <div className="pt-4 border-t border-white/10">
                     <Button
@@ -386,7 +426,7 @@ export default function ToolsPage() {
                   disabled={!canSubmitCreate}
                   className="bg-white text-neutral-900 hover:bg-white/90 disabled:opacity-50"
                 >
-                  Create
+                  Save to catalog
                 </Button>
               </DialogFooter>
             </DialogContent>
