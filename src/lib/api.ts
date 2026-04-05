@@ -4,9 +4,9 @@ import type { Tenant, Assistant, NavigationFlow, Tool, Conversation, Run } from 
 export const tenantsApi = {
   list: () => api.get<Tenant[]>('/v1/tenants').then((res) => res.data),
   get: (id: string) => api.get<Tenant>(`/v1/tenants/${id}`).then((res) => res.data),
-  create: (data: { key: string; name: string; apiKey?: string; enabled: boolean }) =>
+  create: (data: { key: string; name: string; apiKey?: string; enabled: boolean; userId?: string }) =>
     api.post<Tenant>('/v1/tenants', data).then((res) => res.data),
-  update: (id: string, data: { key: string; name: string; apiKey?: string; enabled: boolean }) =>
+  update: (id: string, data: { key: string; name: string; apiKey?: string; enabled: boolean; userId?: string }) =>
     api.put<Tenant>(`/v1/tenants/${id}`, data).then((res) => res.data),
   delete: (id: string) => api.delete(`/v1/tenants/${id}`),
   regenerateKey: (id: string) => api.post<Tenant>(`/v1/tenants/${id}/regenerate-key`).then((res) => res.data),
@@ -45,9 +45,27 @@ export const flowsApi = {
   delete: (assistantId: string, flowId: string) => api.delete(`/v1/assistants/${assistantId}/flows/${flowId}`),
 };
 
+/** Body for POST /v1/tools/attach — key is optional; server generates one when omitted. */
+export type CreateAssistantToolPayload = {
+  assistantId: string;
+  key?: string;
+  displayName: string;
+  description: string;
+  inputSchema: Record<string, unknown>;
+  outputSchema?: Record<string, unknown> | null;
+  type: Tool['type'];
+  version: string;
+  enabled: boolean;
+  executorRef?: string | null;
+  defaultArguments?: Record<string, unknown> | null;
+  metadata?: Record<string, unknown> | null;
+};
+
 export const toolsApi = {
   list: () => api.get<Tool[]>('/v1/tools').then((res) => res.data),
   create: (data: Partial<Tool>) => api.post<Tool>('/v1/tools', data).then((res) => res.data),
+  createAndAttach: (data: CreateAssistantToolPayload) =>
+    api.post<Tool>('/v1/tools/attach', data).then((res) => res.data),
   update: (id: string, data: Partial<Tool>) => api.put<Tool>(`/v1/tools/${id}`, data).then((res) => res.data),
   delete: (id: string) => api.delete(`/v1/tools/${id}`),
 };

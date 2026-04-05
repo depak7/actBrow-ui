@@ -47,7 +47,7 @@ export interface Tool {
   description: string;
   inputSchema: Record<string, unknown>;
   outputSchema: Record<string, unknown> | null;
-  type: 'CLIENT' | 'SERVER_BUILTIN' | 'SERVER_HTTP';
+  type: 'CLIENT' | 'BUILD_IN' | 'SERVER_BUILTIN' | 'SERVER_HTTP';
   version: string;
   enabled: boolean;
   executorRef: string | null;

@@ -2,25 +2,31 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { assistantsApi, toolsApi } from '@/lib/api';
+import { assistantsApi, flowsApi, toolsApi } from '@/lib/api';
 import { Bot, Wrench, Workflow, ArrowRight } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-
 export default function DashboardPage() {
-  const router = useRouter();
-  const [stats, setStats] = useState({ assistants: 0, tools: 0 });
+  const [stats, setStats] = useState({ assistants: 0, tools: 0, flows: 0 });
   const [loading, setLoading] = useState(true);
+  const [statsError, setStatsError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
+        setStatsError(null);
         const [assistants, tools] = await Promise.all([
           assistantsApi.list(), toolsApi.list(),
         ]);
-        setStats({ assistants: assistants.length, tools: tools.length });
-      } catch (error) { console.error('Failed to fetch stats:', error); }
-      finally { setLoading(false); }
+        const flowLists = await Promise.all(
+          assistants.map((a) => flowsApi.list(a.id).catch(() => [])),
+        );
+        const flows = flowLists.reduce((sum, list) => sum + list.length, 0);
+        setStats({ assistants: assistants.length, tools: tools.length, flows });
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : 'Failed to load dashboard';
+        setStatsError(msg);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchStats();
   }, []);
@@ -28,7 +34,7 @@ export default function DashboardPage() {
   const statCards = [
     { title: 'My Assistants', value: stats.assistants, icon: Bot },
     { title: 'Available Tools', value: stats.tools, icon: Wrench },
-    { title: 'Navigation Flows', value: 0, icon: Workflow },
+    { title: 'Navigation Flows', value: stats.flows, icon: Workflow },
   ];
 
   const quickActions = [
@@ -43,6 +49,19 @@ export default function DashboardPage() {
         <h2 className="text-3xl font-semibold text-white">Dashboard</h2>
         <p className="text-neutral-400 mt-1">Manage your AI assistants and resources</p>
       </div>
+
+      {statsError ? (
+        <div
+          className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
+          role="alert"
+        >
+          Could not load stats: {statsError}. Check your API key on{' '}
+          <a href="/login" className="underline font-medium text-white">
+            Login
+          </a>
+          .
+        </div>
+      ) : null}
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {statCards.map((stat, index) => (
