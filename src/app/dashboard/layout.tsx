@@ -12,6 +12,7 @@ import {
   BotMessageSquare,
   Workflow,
   Wrench,
+  BookOpenCheck,
   LogOut,
   Menu,
   X,
@@ -71,6 +72,8 @@ export default function DashboardLayout({
     { href: '/dashboard/assistants', label: 'Assistants', icon: BotMessageSquare },
     { href: '/dashboard/flows', label: 'Navigation Flows', icon: Workflow },
     { href: '/dashboard/tools', label: 'Tools', icon: Wrench },
+    { href: '/dashboard/knowledge', label: 'Knowledge', icon: BookOpenCheck },
+    { href: '/dashboard/checklist', label: 'Checklist', icon: Bot },
   ];
 
   if (loading) {

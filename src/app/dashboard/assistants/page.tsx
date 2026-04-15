@@ -8,16 +8,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { assistantsApi } from '@/lib/api';
 import type { Assistant } from '@/types';
 import Link from 'next/link';
-import { Plus, Trash2, Copy, Check, Wrench } from 'lucide-react';
+import { Plus, Trash2, Copy, Check, Wrench, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from '@/components/ui/textarea';
 
 export default function AssistantsPage() {
   const { toast } = useToast();
   const [assistants, setAssistants] = useState<Assistant[]>([]);
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [editingAssistant, setEditingAssistant] = useState<Assistant | null>(null);
   const [newAssistant, setNewAssistant] = useState({ key: '', name: '', systemPrompt: '', model: 'groq:llama-3.3-70b-versatile', usePredefinedFlows: true });
 
   const fetchAssistants = async () => { 
@@ -61,6 +64,29 @@ export default function AssistantsPage() {
     setCopiedId(id);
     toast({ title: 'Copied!', description: 'Assistant ID copied to clipboard' });
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const openEditDialog = (assistant: Assistant) => {
+    setEditingAssistant(assistant);
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingAssistant) return;
+    try {
+      await assistantsApi.update(editingAssistant.id, {
+        key: editingAssistant.key,
+        name: editingAssistant.name,
+        systemPrompt: editingAssistant.systemPrompt || '',
+        model: editingAssistant.model,
+        usePredefinedFlows: editingAssistant.usePredefinedFlows,
+      });
+      toast({ title: 'Success', description: 'Assistant updated successfully' });
+      setEditDialogOpen(false);
+      fetchAssistants();
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.response?.data?.message || 'Failed to update assistant', variant: 'destructive' });
+    }
   };
 
   return (
@@ -112,7 +138,16 @@ export default function AssistantsPage() {
                         </Link>
                       </Button>
                     </TableCell>
-                    <TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => handleDelete(assistant.id)} className="text-red-400 hover:text-red-300"><Trash2 className="h-4 w-4" /></Button></TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(assistant)} className="text-neutral-400 hover:text-white h-8 w-8">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(assistant.id)} className="text-red-400 hover:text-red-300 h-8 w-8">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -120,6 +155,22 @@ export default function AssistantsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="border-white/10 bg-neutral-900">
+          <DialogHeader><DialogTitle className="text-white">Edit Assistant</DialogTitle><DialogDescription className="text-neutral-400">Update assistant configuration</DialogDescription></DialogHeader>
+          {editingAssistant && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2"><label className="text-sm font-medium text-white">Key</label><Input value={editingAssistant.key} onChange={(e) => setEditingAssistant({ ...editingAssistant, key: e.target.value })} className="border-white/10 bg-white/5 text-white" /></div>
+              <div className="grid gap-2"><label className="text-sm font-medium text-white">Name</label><Input value={editingAssistant.name} onChange={(e) => setEditingAssistant({ ...editingAssistant, name: e.target.value })} className="border-white/10 bg-white/5 text-white" /></div>
+              <div className="grid gap-2"><label className="text-sm font-medium text-white">Model</label><select value={editingAssistant.model} onChange={(e) => setEditingAssistant({ ...editingAssistant, model: e.target.value })} className="flex h-10 rounded-md border border-white/10 bg-white/5 text-white px-3"><option value="groq:llama-3.3-70b-versatile">Llama 3.3 70B</option><option value="gemini:gemini-2.5-flash">Gemini 2.5 Flash</option><option value="openrouter:qwen/qwen3.6-plus">OpenRouter · Qwen3.6 Plus</option><option value="openai:gpt-4o-mini">OpenAI · GPT-4o Mini</option></select></div>
+              <div className="grid gap-2"><label className="text-sm font-medium text-white">System Prompt</label><Textarea value={editingAssistant.systemPrompt || ''} onChange={(e) => setEditingAssistant({ ...editingAssistant, systemPrompt: e.target.value })} className="flex min-h-[120px] rounded-md border border-white/10 bg-white/5 text-white px-3" /></div>
+              <div className="flex items-center gap-2"><input type="checkbox" id="editUsePredefinedFlows" checked={editingAssistant.usePredefinedFlows} onChange={(e) => setEditingAssistant({ ...editingAssistant, usePredefinedFlows: e.target.checked })} className="h-4 w-4" /><label htmlFor="editUsePredefinedFlows" className="text-sm font-medium text-white">Use Predefined Flows</label></div>
+            </div>
+          )}
+          <DialogFooter><Button variant="outline" onClick={() => setEditDialogOpen(false)} className="border-white/10 text-neutral-300">Cancel</Button><Button onClick={handleUpdate} className="bg-white text-neutral-900 hover:bg-white/90">Save</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

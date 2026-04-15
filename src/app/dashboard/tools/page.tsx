@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type MouseEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -11,7 +11,6 @@ import { Plus, Trash2, Wrench } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 
 const APP_NAVIGATE_INPUT_SCHEMA = {
   type: 'object',
@@ -25,35 +24,26 @@ const APP_NAVIGATE_INPUT_SCHEMA = {
 const TOOL_TEMPLATES = {
   CLIENT: [
     {
-      key: 'profile.my-profile',
-      displayName: 'Open Profile Page',
-      description: 'Open the my-profile page when user asked to open his profile page',
+      key: 'client:navigation',
+      displayName: 'Navigation Tool',
+      description: 'Create a page navigation tool for a route in your app.',
       executorRef: 'app.navigate',
       inputSchema: { ...APP_NAVIGATE_INPUT_SCHEMA },
-      defaultArguments: { path: '/my-profile' },
-    },
-    {
-      key: 'app.navigate.home',
-      displayName: 'Navigate to Home',
-      description: 'Navigate to the home page',
-      executorRef: 'app.navigate',
-      inputSchema: { ...APP_NAVIGATE_INPUT_SCHEMA },
-      defaultArguments: { path: '/' },
     },
   ],
   SERVER_HTTP: [
     {
-      key: 'api.get.users',
-      displayName: 'Get Users',
-      description: 'Fetch users from the API',
+      key: 'server_http:get',
+      displayName: 'Fetch Data',
+      description: 'Read data from your backend or an external API.',
       executorRef: 'api.get',
       inputSchema: { type: 'object', properties: {} },
       metadata: { baseUrl: '' },
     },
     {
-      key: 'api.post.create',
-      displayName: 'Create Resource',
-      description: 'Create a new resource via POST request',
+      key: 'server_http:post',
+      displayName: 'Send Data',
+      description: 'Send data to your backend or an external API.',
       executorRef: 'api.post',
       inputSchema: { type: 'object', properties: { body: { type: 'object' } } },
       metadata: { baseUrl: '' },
@@ -70,17 +60,18 @@ type CatalogTemplate = {
   metadata?: Record<string, unknown>;
 };
 
-const emptyNewToolState = () => ({
+const emptyCustomNavigationState = () => ({
   displayName: '',
   description: '',
-  type: 'CLIENT' as 'CLIENT' | 'SERVER_HTTP' | 'SERVER_BUILTIN',
-  version: '1',
+  path: '/',
   enabled: true,
-  executorRef: '',
-  inputSchema: '{}',
-  outputSchema: '{}',
-  defaultArguments: '{}',
-  metadata: '{}',
+});
+
+const emptyServerHttpState = () => ({
+  displayName: '',
+  description: '',
+  baseUrl: '',
+  enabled: true,
 });
 
 export default function ToolsPage() {
@@ -93,18 +84,17 @@ export default function ToolsPage() {
   const [toolsLoading, setToolsLoading] = useState(false);
   const [filter, setFilter] = useState<'ALL' | 'CLIENT' | 'SERVER_BUILTIN' | 'SERVER_HTTP'>('ALL');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
-  const [customMode, setCustomMode] = useState(false);
-  /** Navigation-only custom tool: path → defaultArguments */
-  const [navPath, setNavPath] = useState('/');
-  const [newTool, setNewTool] = useState(emptyNewToolState);
+  const [createMode, setCreateMode] = useState<'catalog' | 'customNavigation' | 'serverHttp'>('catalog');
+  const [selectedServerTemplate, setSelectedServerTemplate] = useState<CatalogTemplate | null>(null);
+  const [customNavigation, setCustomNavigation] = useState(emptyCustomNavigationState);
+  const [serverHttpConfig, setServerHttpConfig] = useState(emptyServerHttpState);
 
   const resetCreateDialog = () => {
-    setCustomMode(false);
-    setSelectedTemplate('');
+    setCreateMode('catalog');
+    setSelectedServerTemplate(null);
     setCreateAssistantId('');
-    setNavPath('/');
-    setNewTool(emptyNewToolState());
+    setCustomNavigation(emptyCustomNavigationState());
+    setServerHttpConfig(emptyServerHttpState());
   };
 
   useEffect(() => {
@@ -149,82 +139,95 @@ export default function ToolsPage() {
 
   const filteredTools = filter === 'ALL' ? tools : tools.filter(t => t.type === filter);
 
-  const handleTemplateSelect = (template: CatalogTemplate, templateId: string, event?: MouseEvent<HTMLButtonElement>) => {
-    event?.preventDefault();
-    event?.stopPropagation();
-    setSelectedTemplate(templateId);
-    setNewTool({
-      displayName: template.displayName,
-      description: template.description,
-      type: template.executorRef.startsWith('api.') ? 'SERVER_HTTP' : 'CLIENT',
-      version: '1',
-      enabled: true,
-      executorRef: template.executorRef,
-      inputSchema: JSON.stringify(template.inputSchema, null, 2),
-      outputSchema: '{}',
-      defaultArguments: JSON.stringify(template.defaultArguments || {}, null, 2),
-      metadata: template.metadata ? JSON.stringify(template.metadata, null, 2) : '{}',
-    });
+  const refreshTools = async () => {
+    if (pageAssistantId) {
+      setTools(await assistantToolsApi.list(pageAssistantId));
+    }
   };
 
-  const canSubmitCreate = Boolean(createAssistantId) && (customMode || Boolean(selectedTemplate));
-
-  const handleCreate = async () => {
+  const ensureAssistantSelected = () => {
     if (!createAssistantId) {
       toast({ title: 'Choose an assistant', description: 'Tools are created and attached to one assistant.', variant: 'destructive' });
+      return false;
+    }
+    return true;
+  };
+
+  const handleCustomNavigationCreate = async () => {
+    if (!ensureAssistantSelected()) {
       return;
     }
-    if (!canSubmitCreate) {
-      toast({ title: 'Pick a template or custom navigation', variant: 'destructive' });
+    if (!customNavigation.displayName.trim()) {
+      toast({ title: 'Name required', description: 'Enter a label like Open Orders.', variant: 'destructive' });
       return;
     }
     try {
-      if (customMode) {
-        const path = navPath.trim() || '/';
-        if (!newTool.displayName.trim()) {
-          toast({ title: 'Display name required', variant: 'destructive' });
-          return;
-        }
-        await toolsApi.createAndAttach({
-          assistantId: createAssistantId,
-          displayName: newTool.displayName.trim(),
-          description: newTool.description.trim(),
-          type: 'CLIENT',
-          version: newTool.version,
-          enabled: newTool.enabled,
-          executorRef: 'app.navigate',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              path: { type: 'string' },
-              url: { type: 'string' },
-            },
+      const path = customNavigation.path.trim() || '/';
+      const description = customNavigation.description.trim() || `Use this when the user wants to open ${customNavigation.displayName.trim() || path}.`;
+      await toolsApi.createAndAttach({
+        assistantId: createAssistantId,
+        displayName: customNavigation.displayName.trim(),
+        description,
+        type: 'CLIENT',
+        version: '1',
+        enabled: customNavigation.enabled,
+        executorRef: 'app.navigate',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            path: { type: 'string' },
+            url: { type: 'string' },
           },
-          outputSchema: null,
-          defaultArguments: { path },
-          metadata: null,
-        });
-      } else {
-        await toolsApi.createAndAttach({
-          assistantId: createAssistantId,
-          displayName: newTool.displayName.trim(),
-          description: newTool.description.trim(),
-          type: newTool.type,
-          version: newTool.version,
-          enabled: newTool.enabled,
-          executorRef: newTool.executorRef || null,
-          inputSchema: JSON.parse(newTool.inputSchema),
-          outputSchema: newTool.outputSchema ? JSON.parse(newTool.outputSchema) : null,
-          defaultArguments: newTool.defaultArguments ? JSON.parse(newTool.defaultArguments) : null,
-          metadata: newTool.metadata && newTool.metadata !== '{}' ? JSON.parse(newTool.metadata) : null,
-        });
-      }
-      toast({ title: 'Success', description: 'Tool created and attached to assistant' });
+        },
+        outputSchema: null,
+        defaultArguments: { path },
+        metadata: null,
+      });
+      toast({ title: 'Created', description: `${customNavigation.displayName.trim()} attached to assistant` });
       setCreateDialogOpen(false);
       resetCreateDialog();
-      if (pageAssistantId) {
-        setTools(await assistantToolsApi.list(pageAssistantId));
-      }
+      await refreshTools();
+    } catch (error: unknown) {
+      const msg =
+        typeof error === 'object' && error !== null && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      toast({ title: 'Error', description: msg || 'Failed to create tool', variant: 'destructive' });
+    }
+  };
+
+  const handleServerHttpCreate = async () => {
+    if (!ensureAssistantSelected()) {
+      return;
+    }
+    if (!selectedServerTemplate) {
+      toast({ title: 'Choose a server template', variant: 'destructive' });
+      return;
+    }
+    if (!serverHttpConfig.baseUrl.trim()) {
+      toast({ title: 'Base URL required', description: 'Enter the API base URL for this tool.', variant: 'destructive' });
+      return;
+    }
+    const displayName = serverHttpConfig.displayName.trim() || selectedServerTemplate.displayName;
+    const description = serverHttpConfig.description.trim() || selectedServerTemplate.description;
+    try {
+      await toolsApi.createAndAttach({
+        assistantId: createAssistantId,
+        displayName,
+        description,
+        type: 'SERVER_HTTP',
+        version: '1',
+        enabled: serverHttpConfig.enabled,
+        executorRef: selectedServerTemplate.executorRef,
+        inputSchema: selectedServerTemplate.inputSchema as Record<string, unknown>,
+        outputSchema: null,
+        defaultArguments: null,
+        metadata: { ...(selectedServerTemplate.metadata || {}), baseUrl: serverHttpConfig.baseUrl.trim() },
+      });
+      toast({ title: 'Created', description: `${displayName} attached to assistant` });
+      setCreateDialogOpen(false);
+      resetCreateDialog();
+      await refreshTools();
     } catch (error: unknown) {
       const msg =
         typeof error === 'object' && error !== null && 'response' in error
@@ -316,8 +319,7 @@ export default function ToolsPage() {
               <DialogHeader>
                 <DialogTitle className="text-white">Create Tool</DialogTitle>
                 <DialogDescription className="text-neutral-400">
-                  Pick an assistant, then a template or custom navigation. The tool is saved and attached to that assistant;
-                  the server assigns a unique catalog key.
+                  Choose an assistant, then create a navigation or server tool with the minimum required fields.
                 </DialogDescription>
               </DialogHeader>
 
@@ -340,23 +342,22 @@ export default function ToolsPage() {
                 ) : null}
               </div>
 
-              {!customMode ? (
+              {createMode === 'catalog' ? (
                 <div className="py-4">
                   <h3 className="text-white font-medium mb-1">Client · Navigation templates</h3>
                   <p className="text-xs text-neutral-500 mb-4">
-                    Pick a starter below to load fields, then save to attach the tool to the assistant above.
+                    Click a template to create it immediately for the selected assistant.
                   </p>
                   <div className="grid gap-3 mb-6">
                     {TOOL_TEMPLATES.CLIENT.map((template, idx) => (
                       <button
                         type="button"
                         key={idx}
-                        onClick={(e) => handleTemplateSelect(template, `CLIENT:${idx}`, e)}
-                        className={`flex items-start gap-3 p-4 rounded-lg border text-left transition ${
-                          selectedTemplate === `CLIENT:${idx}`
-                            ? 'border-white/40 bg-white/10'
-                            : 'border-white/10 bg-white/5 hover:bg-white/10'
-                        }`}
+                        onClick={() => {
+                          setCreateMode('customNavigation');
+                          setCustomNavigation(emptyCustomNavigationState());
+                        }}
+                        className="flex items-start gap-3 p-4 rounded-lg border border-white/10 bg-white/5 text-left transition hover:bg-white/10"
                       >
                         <div className="flex-1">
                           <div className="text-white font-medium">{template.displayName}</div>
@@ -373,12 +374,12 @@ export default function ToolsPage() {
                       <button
                         type="button"
                         key={idx}
-                        onClick={(e) => handleTemplateSelect(template, `SERVER_HTTP:${idx}`, e)}
-                        className={`flex items-start gap-3 p-4 rounded-lg border text-left transition ${
-                          selectedTemplate === `SERVER_HTTP:${idx}`
-                            ? 'border-white/40 bg-white/10'
-                            : 'border-white/10 bg-white/5 hover:bg-white/10'
-                        }`}
+                        onClick={() => {
+                          setSelectedServerTemplate(template);
+                          setServerHttpConfig(emptyServerHttpState());
+                          setCreateMode('serverHttp');
+                        }}
+                        className="flex items-start gap-3 p-4 rounded-lg border border-white/10 bg-white/5 text-left transition hover:bg-white/10"
                       >
                         <div className="flex-1">
                           <div className="text-white font-medium">{template.displayName}</div>
@@ -389,44 +390,12 @@ export default function ToolsPage() {
                     ))}
                   </div>
 
-                  {selectedTemplate ? (
-                    <div className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
-                      <p className="text-sm text-amber-100/90 font-medium">Review before saving</p>
-                      <p className="text-xs text-neutral-400">
-                        Edit the display name or description if you want, then use <span className="text-neutral-200">Save to catalog</span>{' '}
-                        below.
-                      </p>
-                      <div className="grid gap-2">
-                        <div>
-                          <Label className="text-neutral-400 text-xs">Display name</Label>
-                          <Input
-                            value={newTool.displayName}
-                            onChange={(e) => setNewTool({ ...newTool, displayName: e.target.value })}
-                            className="mt-1 border-white/10 bg-white/5 text-white text-sm"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-
                   <div className="pt-4 border-t border-white/10">
                     <Button
                       type="button"
                       onClick={() => {
-                        setCustomMode(true);
-                        setSelectedTemplate('');
-                        setNavPath('/');
-                        setNewTool({
-                          ...emptyNewToolState(),
-                          type: 'CLIENT',
-                          executorRef: 'app.navigate',
-                          inputSchema: JSON.stringify(
-                            { type: 'object', properties: { path: { type: 'string' }, url: { type: 'string' } } },
-                            null,
-                            2
-                          ),
-                          defaultArguments: JSON.stringify({ path: '/' }, null, 2),
-                        });
+                        setCreateMode('customNavigation');
+                        setCustomNavigation(emptyCustomNavigationState());
                       }}
                       variant="outline"
                       className="w-full border-white/10 text-neutral-300 hover:bg-white/5"
@@ -435,47 +404,48 @@ export default function ToolsPage() {
                     </Button>
                   </div>
                 </div>
-              ) : (
+              ) : createMode === 'customNavigation' ? (
                 <div className="grid gap-4 py-4">
-                  <p className="text-xs text-neutral-400">
-                    Creates a client tool with executor <span className="font-mono text-neutral-300">app.navigate</span>{' '}
-                    and your path as the default argument.
-                  </p>
                   <Button
                     type="button"
                     onClick={() => {
-                      setCustomMode(false);
-                      setSelectedTemplate('');
-                      setNewTool(emptyNewToolState());
+                      setCreateMode('catalog');
+                      setCustomNavigation(emptyCustomNavigationState());
                     }}
                     variant="outline"
                     className="border-white/10 text-neutral-300 w-fit"
                   >
                     ← Back to templates
                   </Button>
+                  <p className="text-xs text-neutral-400">
+                    Pick the name your operators will recognize and the app route this tool should always open.
+                  </p>
                   <div className="grid gap-2">
-                    <Label className="text-white">Display name</Label>
+                    <Label className="text-white">Name</Label>
                     <Input
-                      value={newTool.displayName}
-                      onChange={(e) => setNewTool({ ...newTool, displayName: e.target.value })}
+                      value={customNavigation.displayName}
+                      onChange={(e) => setCustomNavigation({ ...customNavigation, displayName: e.target.value })}
                       className="border-white/10 bg-white/5 text-white"
                       placeholder="Open Orders"
                     />
                   </div>
                   <div className="grid gap-2">
                     <Label className="text-white">Description</Label>
-                    <Textarea
-                      value={newTool.description}
-                      onChange={(e) => setNewTool({ ...newTool, description: e.target.value })}
+                    <Input
+                      value={customNavigation.description}
+                      onChange={(e) => setCustomNavigation({ ...customNavigation, description: e.target.value })}
                       className="border-white/10 bg-white/5 text-white"
-                      rows={2}
+                      placeholder="Use this when the user asks to open the orders page."
                     />
+                    <p className="text-xs text-neutral-500">
+                      This helps the assistant decide when to use the tool.
+                    </p>
                   </div>
                   <div className="grid gap-2">
                     <Label className="text-white">Path</Label>
                     <Input
-                      value={navPath}
-                      onChange={(e) => setNavPath(e.target.value)}
+                      value={customNavigation.path}
+                      onChange={(e) => setCustomNavigation({ ...customNavigation, path: e.target.value })}
                       className="border-white/10 bg-white/5 text-white font-mono text-sm"
                       placeholder="/orders"
                     />
@@ -484,11 +454,76 @@ export default function ToolsPage() {
                     <input
                       type="checkbox"
                       id="nav-tool-enabled"
-                      checked={newTool.enabled}
-                      onChange={(e) => setNewTool({ ...newTool, enabled: e.target.checked })}
+                      checked={customNavigation.enabled}
+                      onChange={(e) => setCustomNavigation({ ...customNavigation, enabled: e.target.checked })}
                       className="h-4 w-4"
                     />
                     <Label htmlFor="nav-tool-enabled" className="text-white">
+                      Enabled
+                    </Label>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid gap-4 py-4">
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setCreateMode('catalog');
+                      setSelectedServerTemplate(null);
+                      setServerHttpConfig(emptyServerHttpState());
+                    }}
+                    variant="outline"
+                    className="border-white/10 text-neutral-300 w-fit"
+                  >
+                    ← Back to templates
+                  </Button>
+                  <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+                    <p className="text-sm font-medium text-white">{selectedServerTemplate?.displayName}</p>
+                    <p className="mt-1 text-xs text-neutral-400">{selectedServerTemplate?.description}</p>
+                    <p className="mt-2 text-xs font-mono text-neutral-500">{selectedServerTemplate?.executorRef}</p>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-white">Name</Label>
+                    <Input
+                      value={serverHttpConfig.displayName}
+                      onChange={(e) => setServerHttpConfig({ ...serverHttpConfig, displayName: e.target.value })}
+                      className="border-white/10 bg-white/5 text-white"
+                      placeholder={selectedServerTemplate?.displayName}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-white">Description</Label>
+                    <Input
+                      value={serverHttpConfig.description}
+                      onChange={(e) => setServerHttpConfig({ ...serverHttpConfig, description: e.target.value })}
+                      className="border-white/10 bg-white/5 text-white"
+                      placeholder={selectedServerTemplate?.description}
+                    />
+                    <p className="text-xs text-neutral-500">
+                      Describe what this tool does so the assistant can pick it correctly.
+                    </p>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-white">Base URL</Label>
+                    <Input
+                      value={serverHttpConfig.baseUrl}
+                      onChange={(e) => setServerHttpConfig({ ...serverHttpConfig, baseUrl: e.target.value })}
+                      className="border-white/10 bg-white/5 text-white font-mono text-sm"
+                      placeholder="https://api.example.com"
+                    />
+                    <p className="text-xs text-neutral-500">
+                      This should be the SaaS-specific API base for this tool. The request method comes from the template.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="server-tool-enabled"
+                      checked={serverHttpConfig.enabled}
+                      onChange={(e) => setServerHttpConfig({ ...serverHttpConfig, enabled: e.target.checked })}
+                      className="h-4 w-4"
+                    />
+                    <Label htmlFor="server-tool-enabled" className="text-white">
                       Enabled
                     </Label>
                   </div>
@@ -504,14 +539,24 @@ export default function ToolsPage() {
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="button"
-                  onClick={handleCreate}
-                  disabled={!canSubmitCreate}
-                  className="bg-white text-neutral-900 hover:bg-white/90 disabled:opacity-50"
-                >
-                  Save to catalog
-                </Button>
+                {createMode === 'customNavigation' ? (
+                  <Button
+                    type="button"
+                    onClick={handleCustomNavigationCreate}
+                    className="bg-white text-neutral-900 hover:bg-white/90"
+                  >
+                    Create tool
+                  </Button>
+                ) : null}
+                {createMode === 'serverHttp' ? (
+                  <Button
+                    type="button"
+                    onClick={handleServerHttpCreate}
+                    className="bg-white text-neutral-900 hover:bg-white/90"
+                  >
+                    Create tool
+                  </Button>
+                ) : null}
               </DialogFooter>
             </DialogContent>
           </Dialog>

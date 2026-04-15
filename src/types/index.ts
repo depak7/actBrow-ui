@@ -56,6 +56,17 @@ export interface Tool {
   createdAt: string;
 }
 
+export interface KnowledgeDocument {
+  id: string;
+  assistantId: string;
+  title: string;
+  content: string;
+  source: string | null;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Conversation {
   id: string;
   assistantId: string;

@@ -1,5 +1,5 @@
 import api from './api-client';
-import type { Tenant, Assistant, NavigationFlow, Tool, Conversation, Run } from '@/types';
+import type { Tenant, Assistant, NavigationFlow, Tool, Conversation, Run, KnowledgeDocument } from '@/types';
 
 export const tenantsApi = {
   list: () => api.get<Tenant[]>('/v1/tenants').then((res) => res.data),
@@ -81,6 +81,17 @@ export const assistantToolsApi = {
     api.put(`/v1/assistants/${assistantId}/tools/${toolId}`, { defaultArguments }),
   detach: (assistantId: string, toolId: string) =>
     api.delete(`/v1/assistants/${assistantId}/tools/${toolId}`),
+};
+
+export const knowledgeApi = {
+  list: (assistantId: string) =>
+    api.get<KnowledgeDocument[]>(`/v1/assistants/${assistantId}/knowledge`).then((res) => res.data),
+  create: (
+    assistantId: string,
+    data: { title: string; content: string; source?: string | null; enabled: boolean }
+  ) => api.post<KnowledgeDocument>(`/v1/assistants/${assistantId}/knowledge`, data).then((res) => res.data),
+  delete: (assistantId: string, knowledgeId: string) =>
+    api.delete(`/v1/assistants/${assistantId}/knowledge/${knowledgeId}`),
 };
 
 export const conversationsApi = {
