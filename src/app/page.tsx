@@ -37,8 +37,8 @@ export default function LandingPage() {
   const additionalFeatures = [
     {
       icon: Shield,
-      title: 'Multi-Tenant Architecture',
-      description: 'API key authentication, tenant isolation, and enterprise-grade security.',
+      title: 'User-Owned Assistants',
+      description: 'Each signed-in user owns assistants under one account API key for SDK and tool access.',
     },
     {
       icon: Workflow,

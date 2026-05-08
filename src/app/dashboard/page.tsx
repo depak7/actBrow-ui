@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { assistantsApi, flowsApi, toolsApi } from '@/lib/api';
+import { readStoredUserId, setActiveAssistant } from '@/lib/session';
 import { Bot, Wrench, Workflow, ArrowRight } from 'lucide-react';
 export default function DashboardPage() {
   const [stats, setStats] = useState({ assistants: 0, tools: 0, flows: 0 });
@@ -13,9 +14,17 @@ export default function DashboardPage() {
     const fetchStats = async () => {
       try {
         setStatsError(null);
-        const [assistants, tools] = await Promise.all([
-          assistantsApi.list(), toolsApi.list(),
-        ]);
+        const userId = readStoredUserId();
+        if (!userId) {
+          throw new Error('Missing signed-in user');
+        }
+        const assistants = await assistantsApi.list(userId);
+        if (assistants.length === 0) {
+          setStats({ assistants: 0, tools: 0, flows: 0 });
+          return;
+        }
+        setActiveAssistant(assistants[0]);
+        const tools = await toolsApi.list();
         const flowLists = await Promise.all(
           assistants.map((a) => flowsApi.list(a.id).catch(() => [])),
         );

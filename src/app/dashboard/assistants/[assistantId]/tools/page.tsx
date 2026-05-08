@@ -16,10 +16,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { assistantToolsApi, toolsApi } from '@/lib/api';
+import { assistantToolsApi, assistantsApi, toolsApi } from '@/lib/api';
 import type { Tool } from '@/types';
 import { ArrowLeft, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { readStoredUserId, setActiveAssistant } from '@/lib/session';
 
 export default function AssistantToolsPage() {
   const params = useParams();
@@ -40,6 +41,15 @@ export default function AssistantToolsPage() {
 
   const load = async () => {
     try {
+      const userId = readStoredUserId();
+      if (!userId) {
+        throw new Error('Missing user');
+      }
+      const assistants = await assistantsApi.list(userId);
+      const assistant = assistants.find((item) => item.id === assistantId);
+      if (assistant) {
+        setActiveAssistant(assistant);
+      }
       const [a, c] = await Promise.all([assistantToolsApi.list(assistantId), toolsApi.list()]);
       setAttached(a);
       setCatalog(c);

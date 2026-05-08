@@ -30,19 +30,15 @@ Open [http://localhost:3000](http://localhost:3000)
 ## Pages
 
 - **Landing** (`/`) - Marketing page with features
-- **Login** (`/login`) - API key authentication
+- **Login** (`/login`) - Google sign-in
 - **Dashboard** (`/dashboard`) - Overview & stats
-- **Tenants** (`/dashboard/tenants`) - Manage tenants & API keys
 - **Assistants** (`/dashboard/assistants`) - AI assistant configuration
 - **Navigation Flows** (`/dashboard/flows`) - Step-by-step automation
 - **Tools** (`/dashboard/tools`) - Client & server tools
 
-## Default Login
+## Login
 
-Use the default tenant API key:
-```
-ak_default_tenant_key
-```
+Sign in with Google, then create an assistant. Each assistant has its own API key for SDK and tool access.
 
 ## Tech Stack
 
@@ -68,7 +64,6 @@ ui/
 │   │   └── dashboard/
 │   │       ├── layout.tsx
 │   │       ├── page.tsx
-│   │       ├── tenants/
 │   │       ├── assistants/
 │   │       ├── flows/
 │   │       └── tools/
@@ -92,10 +87,10 @@ ui/
 All API calls are in `src/lib/api.ts`:
 
 ```typescript
-import { tenantsApi, assistantsApi, flowsApi, toolsApi } from '@/lib/api';
+import { assistantsApi, flowsApi, toolsApi } from '@/lib/api';
 
-// List tenants
-const tenants = await tenantsApi.list();
+// List assistants owned by a signed-in user
+const assistants = await assistantsApi.list(userId);
 
 // Create assistant
 await assistantsApi.create({
@@ -103,14 +98,15 @@ await assistantsApi.create({
   name: 'My Bot',
   model: 'groq:qwen-2.5-coder-32b',
   usePredefinedFlows: true,
+  userId,
 });
 ```
 
 ## Authentication
 
-- API key stored in `localStorage` as `actbrow_api_key`
-- Automatically added to requests via Axios interceptor
-- 401 responses redirect to login page
+- Signed-in user stored in `localStorage` as `actbrow_user`
+- Active assistant API key stored in `localStorage` as `actbrow_api_key`
+- The active assistant key is automatically added to protected API requests
 
 ## Build for Production
 
@@ -122,9 +118,8 @@ npm run start
 ## Features
 
 ✅ Landing page with features
-✅ Login with API key validation
+✅ Google sign-in
 ✅ Dashboard with stats
-✅ Tenant management (CRUD + regenerate key)
 ✅ Assistant management (CRUD)
 ✅ Navigation flows (create with multi-step editor)
 ✅ Tools listing with type filtering

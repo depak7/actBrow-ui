@@ -20,6 +20,7 @@ import {
   Key,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { clearSession, readStoredUser } from '@/lib/session';
 
 export default function DashboardLayout({
   children,
@@ -34,31 +35,27 @@ export default function DashboardLayout({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const apiKey = localStorage.getItem('actbrow_api_key');
-    const userStr = localStorage.getItem('actbrow_user');
+    const syncActiveKey = () => {
+      const apiKey = localStorage.getItem('actbrow_api_key');
+      setApiKeyPreview(apiKey ? (apiKey.length > 12 ? `${apiKey.slice(0, 8)}…${apiKey.slice(-4)}` : apiKey) : '');
+    };
+    const user = readStoredUser();
 
-    if (!apiKey) {
+    if (!user?.id) {
       router.push('/login');
       return;
     }
 
-    setApiKeyPreview(apiKey.length > 12 ? `${apiKey.slice(0, 8)}…${apiKey.slice(-4)}` : apiKey);
-
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr) as { email?: string; fullName?: string };
-        setUserLabel(user.fullName || user.email || 'Account');
-      } catch {
-        setUserLabel('Account');
-      }
-    }
-
+    syncActiveKey();
+    setUserLabel(user.fullName || user.email || 'Account');
     setLoading(false);
+
+    window.addEventListener('actbrow-active-assistant-changed', syncActiveKey);
+    return () => window.removeEventListener('actbrow-active-assistant-changed', syncActiveKey);
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem('actbrow_api_key');
-    localStorage.removeItem('actbrow_user');
+    clearSession();
     router.push('/login');
   };
 
@@ -155,12 +152,18 @@ export default function DashboardLayout({
             <div className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 space-y-2">
               <div className="flex items-center gap-2 text-neutral-400">
                 <Key className="h-3.5 w-3.5" />
-                <span className="text-xs font-medium uppercase tracking-wide">API key</span>
+                <span className="text-xs font-medium uppercase tracking-wide">Account API key</span>
               </div>
-              <code className="text-[10px] text-neutral-300 font-mono break-all block">{apiKeyPreview}</code>
-              <Button variant="outline" size="sm" className="w-full border-white/10 text-xs text-white h-8" onClick={copyApiKey}>
-                Copy full key
-              </Button>
+              {apiKeyPreview ? (
+                <>
+                  <code className="text-[10px] text-neutral-300 font-mono break-all block">{apiKeyPreview}</code>
+                  <Button variant="outline" size="sm" className="w-full border-white/10 text-xs text-white h-8" onClick={copyApiKey}>
+                    Copy full key
+                  </Button>
+                </>
+              ) : (
+                <p className="text-xs text-neutral-500">Sign in again to refresh your account key.</p>
+              )}
             </div>
             <Button variant="ghost" className="w-full justify-start gap-3 text-neutral-400 hover:text-white" onClick={handleLogout}>
               <LogOut className="h-4 w-4" />

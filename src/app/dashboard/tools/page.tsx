@@ -7,10 +7,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { assistantsApi, assistantToolsApi, toolsApi } from '@/lib/api';
 import type { Assistant, Tool } from '@/types';
-import { Plus, Trash2, Wrench } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from '@/components/ui/label';
+import { readStoredUserId, setActiveAssistant } from '@/lib/session';
 
 const APP_NAVIGATE_INPUT_SCHEMA = {
   type: 'object',
@@ -100,8 +101,16 @@ export default function ToolsPage() {
   useEffect(() => {
     const loadAssistants = async () => {
       try {
-        const assistantData = await assistantsApi.list();
+        const userId = readStoredUserId();
+        if (!userId) {
+          throw new Error('Missing user');
+        }
+        const assistantData = await assistantsApi.list(userId);
         setAssistants(assistantData);
+        if (assistantData.length > 0) {
+          setActiveAssistant(assistantData[0]);
+          setPageAssistantId((current) => current || assistantData[0].id);
+        }
       } catch {
         toast({ title: 'Error', description: 'Failed to load assistants', variant: 'destructive' });
       } finally {
@@ -120,6 +129,8 @@ export default function ToolsPage() {
     const loadTools = async () => {
       setToolsLoading(true);
       try {
+        const assistant = assistants.find((a) => a.id === pageAssistantId);
+        if (assistant) setActiveAssistant(assistant);
         const data = await assistantToolsApi.list(pageAssistantId);
         if (!cancelled) setTools(data);
       } catch {
@@ -141,6 +152,8 @@ export default function ToolsPage() {
 
   const refreshTools = async () => {
     if (pageAssistantId) {
+      const assistant = assistants.find((a) => a.id === pageAssistantId);
+      if (assistant) setActiveAssistant(assistant);
       setTools(await assistantToolsApi.list(pageAssistantId));
     }
   };
@@ -162,6 +175,8 @@ export default function ToolsPage() {
       return;
     }
     try {
+      const assistant = assistants.find((a) => a.id === createAssistantId);
+      if (assistant) setActiveAssistant(assistant);
       const path = customNavigation.path.trim() || '/';
       const description = customNavigation.description.trim() || `Use this when the user wants to open ${customNavigation.displayName.trim() || path}.`;
       await toolsApi.createAndAttach({
@@ -211,6 +226,8 @@ export default function ToolsPage() {
     const displayName = serverHttpConfig.displayName.trim() || selectedServerTemplate.displayName;
     const description = serverHttpConfig.description.trim() || selectedServerTemplate.description;
     try {
+      const assistant = assistants.find((a) => a.id === createAssistantId);
+      if (assistant) setActiveAssistant(assistant);
       await toolsApi.createAndAttach({
         assistantId: createAssistantId,
         displayName,
@@ -240,6 +257,8 @@ export default function ToolsPage() {
   const handleDeleteTool = async (id: string, displayName: string) => {
     if (!confirm(`Delete "${displayName}"? This removes the tool from the catalog and all assistants.`)) return;
     try {
+      const assistant = assistants.find((a) => a.id === pageAssistantId);
+      if (assistant) setActiveAssistant(assistant);
       await toolsApi.delete(id);
       toast({ title: 'Deleted', description: displayName });
       if (pageAssistantId) {
@@ -269,7 +288,7 @@ export default function ToolsPage() {
               <option value="">Select an assistant to view tools…</option>
               {assistants.map((a) => (
                 <option key={a.id} value={a.id}>
-                  {a.name} ({a.key})
+                  {a.name}
                 </option>
               ))}
             </select>
@@ -333,7 +352,7 @@ export default function ToolsPage() {
                   <option value="">Select assistant…</option>
                   {assistants.map((a) => (
                     <option key={a.id} value={a.id}>
-                      {a.name} ({a.key})
+                    {a.name}
                     </option>
                   ))}
                 </select>
@@ -642,22 +661,6 @@ export default function ToolsPage() {
           </Table>
         </CardContent>
       </Card>
-
-      <div className="grid gap-6 md:grid-cols-3">
-        {[
-          { title: 'Client Tools', desc: 'In-browser navigation via the Actbrow SDK', tools: ['app.navigate'] },
-          { title: 'Server Built-in', desc: 'Java-based server logic', tools: ['Custom implementations', 'Service calls'] },
-          { title: 'Server HTTP', desc: 'External API calls via HTTP', tools: ['api.get', 'api.post', 'api.put', 'api.delete'] },
-        ].map((category, index) => (
-          <Card key={index} className="border-white/10 bg-white/5">
-            <CardHeader><CardTitle className="text-white flex items-center gap-2"><Wrench className="h-5 w-5 text-white" />{category.title}</CardTitle></CardHeader>
-            <CardContent>
-              <p className="text-sm text-neutral-500 mb-4">{category.desc}</p>
-              <ul className="space-y-2">{category.tools.map((tool, i) => (<li key={i} className="flex items-center gap-2 text-sm text-neutral-300"><div className="h-1.5 w-1.5 rounded-full bg-white" />{tool}</li>))}</ul>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
     </div>
   );
 }

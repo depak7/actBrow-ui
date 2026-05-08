@@ -1,49 +1,53 @@
 "use client";
 
 import Script from "next/script";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const DEFAULT_BASE = "http://localhost:8080";
 
 export default function AssistantBoot() {
+  const router = useRouter();
+  const [ready, setReady] = useState(false);
   const baseUrl =
     process.env.NEXT_PUBLIC_ACTBROW_BASE_URL?.replace(/\/$/, "") ??
     DEFAULT_BASE;
 
-  const assistantId =
-    process.env.NEXT_PUBLIC_ACTBROW_ASSISTANT_ID ??
-    "bb3d1327-5ea7-44bb-b203-bcd5a5d4c959";
-
-  const apiKey =
-    process.env.NEXT_PUBLIC_ACTBROW_API_KEY ??
-    "ak_SiC3AVwngnHzzZB-iaZN52Oa1A1kFL2YzyZed7XKWTU";
-
-  // Set config immediately before scripts load
   useEffect(() => {
-    (window as any).ActbrowWidgetConfig = {
-      assistantId: assistantId,
-      apiKey: apiKey,
-      baseUrl: baseUrl,
-      debug: true
+    const syncConfig = () => {
+      const assistantId =
+        process.env.NEXT_PUBLIC_ACTBROW_ASSISTANT_ID ??
+        localStorage.getItem("actbrow_active_assistant_id");
+      const apiKey =
+        process.env.NEXT_PUBLIC_ACTBROW_API_KEY ??
+        localStorage.getItem("actbrow_api_key");
+
+      if (!assistantId || !apiKey) {
+        setReady(false);
+        return;
+      }
+
+      (window as any).ActbrowWidgetConfig = {
+        assistantId: assistantId,
+        apiKey: apiKey,
+        baseUrl: baseUrl,
+        debug: true,
+        navigate: (path: string) => router.push(path),
+      };
+      setReady(true);
     };
-  }, [assistantId, apiKey, baseUrl]);
+
+    syncConfig();
+    window.addEventListener("actbrow-active-assistant-changed", syncConfig);
+    return () => window.removeEventListener("actbrow-active-assistant-changed", syncConfig);
+  }, [baseUrl, router]);
+
+  if (!ready) {
+    return null;
+  }
 
   return (
     <>
-      <Script
-        id="actbrow-config"
-        strategy="beforeInteractive"
-        dangerouslySetInnerHTML={{
-          __html: `
-            window.ActbrowWidgetConfig = {
-              assistantId: "${assistantId}",
-              apiKey: "${apiKey}",
-              baseUrl: "${baseUrl}",
-              debug: true
-            };
-          `,
-        }}
-      />
       <Script src={`${baseUrl}/actbrow-sdk.js`} strategy="afterInteractive" />
       <Script src={`${baseUrl}/actbrow-widget.js`} strategy="afterInteractive" />
     </>

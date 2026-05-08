@@ -6,16 +6,8 @@ import Script from 'next/script';
 import { Button } from '@/components/ui/button';
 import { BrandLogo } from '@/components/brand-logo';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { clearActiveAssistant, setStoredUser } from '@/lib/session';
 
 declare global {
   interface Window {
@@ -36,21 +28,14 @@ export default function LoginPage() {
   const googleBtnRef = useRef<HTMLDivElement>(null);
   const [scriptReady, setScriptReady] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
-  const [newApiKey, setNewApiKey] = useState('');
   const clientId = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '').trim();
 
   const finishLogin = useCallback(
-    (apiKey: string, user: Record<string, unknown>, showApiKeyOnce: boolean) => {
-      localStorage.setItem('actbrow_api_key', apiKey);
-      localStorage.setItem('actbrow_user', JSON.stringify(user));
-      if (showApiKeyOnce) {
-        setNewApiKey(apiKey);
-        setApiKeyModalOpen(true);
-      } else {
-        toast({ title: 'Signed in', description: 'Welcome back.' });
-        router.push('/dashboard');
-      }
+    (apiKey: string, user: Record<string, unknown>) => {
+      clearActiveAssistant();
+      setStoredUser({ ...user, apiKey });
+      toast({ title: 'Signed in', description: 'Welcome back.' });
+      router.push('/dashboard');
     },
     [router, toast]
   );
@@ -65,7 +50,7 @@ export default function LoginPage() {
           body: JSON.stringify({ idToken: credential }),
         });
         const data = await response.json();
-        if (!response.ok || !data.success || !data.apiKey) {
+        if (!response.ok || !data.success || !data.user?.id || !data.apiKey) {
           toast({
             title: 'Sign-in failed',
             description: data.error || 'Could not complete Google sign-in',
@@ -73,7 +58,7 @@ export default function LoginPage() {
           });
           return;
         }
-        finishLogin(data.apiKey, data.user, Boolean(data.showApiKeyOnce));
+        finishLogin(data.apiKey, data.user);
       } catch {
         toast({ title: 'Sign-in failed', description: 'Network error', variant: 'destructive' });
       } finally {
@@ -100,16 +85,6 @@ export default function LoginPage() {
     });
   }, [scriptReady, clientId, handleCredential]);
 
-  const copyKey = async () => {
-    await navigator.clipboard.writeText(newApiKey);
-    toast({ title: 'Copied', description: 'API key copied to clipboard' });
-  };
-
-  const closeKeyModal = () => {
-    setApiKeyModalOpen(false);
-    router.push('/dashboard');
-  };
-
   return (
     <>
       <Script
@@ -126,8 +101,8 @@ export default function LoginPage() {
             <div className="space-y-2">
               <CardTitle className="text-2xl font-semibold text-white">Sign in with Google</CardTitle>
               <CardDescription className="text-neutral-400">
-                We create your account, issue an API key for the ActBrow API, and then you can add assistants and
-                tools.
+                We create your account API key, then you can add assistants and use the same key for SDK and tool
+                access.
               </CardDescription>
             </div>
           </CardHeader>
@@ -152,28 +127,6 @@ export default function LoginPage() {
           </CardContent>
         </Card>
 
-        <Dialog open={apiKeyModalOpen} onOpenChange={(o) => !o && closeKeyModal()}>
-          <DialogContent className="border-white/10 bg-neutral-900 sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle className="text-white">Save your API key</DialogTitle>
-              <DialogDescription className="text-neutral-400">
-                This key was just created for your account. Copy it now; you will use it in the SDK and for API
-                requests. You can also find it later in the dashboard sidebar.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-2">
-              <Input readOnly value={newApiKey} className="font-mono text-xs border-white/10 bg-black/40 text-white" />
-            </div>
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button variant="outline" onClick={copyKey} className="border-white/10 text-white">
-                Copy key
-              </Button>
-              <Button onClick={closeKeyModal} className="bg-white text-neutral-900 hover:bg-white/90">
-                Continue to dashboard
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </>
   );

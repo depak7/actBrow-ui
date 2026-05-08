@@ -1,36 +1,14 @@
 import api from './api-client';
-import type { Tenant, Assistant, NavigationFlow, Tool, Conversation, Run, KnowledgeDocument } from '@/types';
-
-export const tenantsApi = {
-  list: () => api.get<Tenant[]>('/v1/tenants').then((res) => res.data),
-  get: (id: string) => api.get<Tenant>(`/v1/tenants/${id}`).then((res) => res.data),
-  create: (data: { key: string; name: string; apiKey?: string; enabled: boolean; userId?: string }) =>
-    api.post<Tenant>('/v1/tenants', data).then((res) => res.data),
-  update: (id: string, data: { key: string; name: string; apiKey?: string; enabled: boolean; userId?: string }) =>
-    api.put<Tenant>(`/v1/tenants/${id}`, data).then((res) => res.data),
-  delete: (id: string) => api.delete(`/v1/tenants/${id}`),
-  regenerateKey: (id: string) => api.post<Tenant>(`/v1/tenants/${id}/regenerate-key`).then((res) => res.data),
-  validateKey: (apiKey: string) =>
-    api
-      .post<{
-        valid: boolean;
-        message?: string;
-        userId?: string;
-        email?: string;
-        tenantId?: string;
-        tenantKey?: string;
-      }>('/v1/tenants/validate-key', { apiKey })
-      .then((res) => res.data),
-};
+import type { Assistant, NavigationFlow, Tool, Conversation, Run, KnowledgeDocument } from '@/types';
 
 export const assistantsApi = {
-  list: (tenantId?: string) => {
-    const params = tenantId ? { tenantId } : {};
+  list: (userId?: string) => {
+    const params = userId ? { userId } : {};
     return api.get<Assistant[]>('/v1/assistants', { params }).then((res) => res.data);
   },
-  create: (data: { key: string; name: string; systemPrompt?: string; model: string; usePredefinedFlows: boolean; tenantId?: string }) =>
+  create: (data: { name: string; systemPrompt?: string; model?: string; usePredefinedFlows: boolean; userId: string }) =>
     api.post<Assistant>('/v1/assistants', data).then((res) => res.data),
-  update: (id: string, data: { key: string; name: string; systemPrompt?: string; model: string; usePredefinedFlows: boolean; tenantId?: string }) =>
+  update: (id: string, data: { name: string; systemPrompt?: string; model?: string; usePredefinedFlows: boolean; userId: string }) =>
     api.put<Assistant>(`/v1/assistants/${id}`, data).then((res) => res.data),
   delete: (id: string) => api.delete(`/v1/assistants/${id}`),
 };

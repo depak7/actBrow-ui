@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_BASE_URL } from '@/types';
+import { clearSession } from './session';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -8,7 +9,7 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to add API key
+// Request interceptor to add the signed-in account API key.
 api.interceptors.request.use((config) => {
   const apiKey = localStorage.getItem('actbrow_api_key');
   if (apiKey) {
@@ -18,13 +19,12 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor for error handling
+// An invalid assistant key should not sign the dashboard user out.
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('actbrow_api_key');
-      localStorage.removeItem('actbrow_user');
+      clearSession();
       window.location.href = '/login';
     }
     return Promise.reject(error);

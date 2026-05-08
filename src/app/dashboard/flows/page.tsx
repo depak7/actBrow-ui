@@ -10,6 +10,7 @@ import type { NavigationFlow, Assistant, Tool } from '@/types';
 import { Plus, Trash2, Workflow } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { readStoredUserId, setActiveAssistant } from '@/lib/session';
 
 export default function FlowsPage() {
   const { toast } = useToast();
@@ -26,14 +27,20 @@ export default function FlowsPage() {
     steps: [{ toolId: '', description: '' }],
   });
 
-  const fetchFlows = async () => { if (!selectedAssistant) { setFlows([]); return; } try { const data = await flowsApi.list(selectedAssistant); setFlows(data); } catch (error) { toast({ title: 'Error', description: 'Failed', variant: 'destructive' }); } finally { setLoading(false); } };
-  const fetchAssistants = async () => { try { const data = await assistantsApi.list(); setAssistants(data); if (data.length > 0) setSelectedAssistant(data[0].id); } catch (error) { console.error(error); } };
+  const activateSelectedAssistant = () => {
+    const assistant = assistants.find((a) => a.id === selectedAssistant);
+    if (assistant) setActiveAssistant(assistant);
+  };
+  const selectedAssistantName = assistants.find((a) => a.id === selectedAssistant)?.name || '';
+  const fetchFlows = async () => { if (!selectedAssistant) { setFlows([]); setLoading(false); return; } try { activateSelectedAssistant(); const data = await flowsApi.list(selectedAssistant); setFlows(data); } catch (error) { toast({ title: 'Error', description: 'Failed', variant: 'destructive' }); } finally { setLoading(false); } };
+  const fetchAssistants = async () => { try { const userId = readStoredUserId(); if (!userId) throw new Error('Missing user'); const data = await assistantsApi.list(userId); setAssistants(data); if (data.length > 0) { setActiveAssistant(data[0]); setSelectedAssistant(data[0].id); } else { setLoading(false); } } catch (error) { console.error(error); setLoading(false); } };
   const fetchAssistantNavigateTools = async () => {
     if (!selectedAssistant) {
       setAssistantNavigateTools([]);
       return;
     }
     try {
+      activateSelectedAssistant();
       const tools = await assistantToolsApi.list(selectedAssistant);
       setAssistantNavigateTools(
         tools.filter((t) => t.type === 'CLIENT' && t.executorRef === 'app.navigate' && t.enabled)
@@ -105,7 +112,7 @@ export default function FlowsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h2 className="text-3xl font-semibold text-white">Navigation Flows</h2><p className="text-neutral-400">Create automated workflows</p></div>
+        <div><h2 className="text-3xl font-semibold text-white">Navigation Flows</h2><p className="text-neutral-400">Create automated workflows{selectedAssistantName ? ` for ${selectedAssistantName}` : ''}</p></div>
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild><Button disabled={!selectedAssistant} className="bg-white text-neutral-900 hover:bg-white/90"><Plus className="h-4 w-4 mr-2" />Create Flow</Button></DialogTrigger>
           <DialogContent className="max-w-2xl border-white/10 bg-neutral-900">
@@ -165,11 +172,18 @@ export default function FlowsPage() {
       </div>
 
       <Card className="border-white/10 bg-white/5">
-        <CardHeader><CardTitle className="text-white">Select Assistant</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-white">Assistant</CardTitle></CardHeader>
         <CardContent>
-          <select value={selectedAssistant} onChange={(e) => setSelectedAssistant(e.target.value)} className="flex h-10 rounded-md border border-white/10 bg-white/5 text-white px-3 text-sm">
-            {assistants.map((a) => (<option key={a.id} value={a.id}>{a.name} ({a.key})</option>))}
-          </select>
+          {assistants.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-white/10 bg-black/20 p-6">
+              <p className="text-sm font-medium text-white">No assistants yet</p>
+              <p className="mt-1 text-sm text-neutral-400">Create an assistant first, then come back to add navigation flows.</p>
+            </div>
+          ) : (
+            <select value={selectedAssistant} onChange={(e) => setSelectedAssistant(e.target.value)} className="flex h-10 rounded-md border border-white/10 bg-white/5 text-white px-3 text-sm">
+              {assistants.map((a) => (<option key={a.id} value={a.id}>{a.name}</option>))}
+            </select>
+          )}
         </CardContent>
       </Card>
 

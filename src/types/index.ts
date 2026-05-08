@@ -3,15 +3,6 @@ const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL;
 export const API_BASE_URL =
   configuredApiUrl && !/^https?:\/\//.test(configuredApiUrl) ? configuredApiUrl : '/api';
 
-export interface Tenant {
-  id: string;
-  key: string;
-  name: string;
-  apiKey: string;
-  enabled: boolean;
-  createdAt: string;
-}
-
 export interface Assistant {
   id: string;
   key: string;
@@ -19,8 +10,7 @@ export interface Assistant {
   systemPrompt: string | null;
   model: string;
   usePredefinedFlows: boolean;
-  tenantId: string | null;
-  userId: string | null;
+  userId: string;
   createdAt: string;
 }
 
