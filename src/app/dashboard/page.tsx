@@ -2,13 +2,37 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { assistantsApi, flowsApi, toolsApi } from '@/lib/api';
-import { readStoredUserId, setActiveAssistant } from '@/lib/session';
-import { Bot, Wrench, Workflow, ArrowRight } from 'lucide-react';
+import {
+  copyStoredAccountApiKey,
+  getStoredAccountApiKeyPreview,
+  readStoredUserId,
+  setActiveAssistant,
+} from '@/lib/session';
+import { Bot, Wrench, Workflow, ArrowRight, Key, Copy, Check } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
 export default function DashboardPage() {
+  const { toast } = useToast();
   const [stats, setStats] = useState({ assistants: 0, tools: 0, flows: 0 });
   const [loading, setLoading] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
+  const [apiKeyPreview, setApiKeyPreview] = useState('');
+  const [apiKeyCopied, setApiKeyCopied] = useState(false);
+
+  useEffect(() => {
+    const syncKey = () => {
+      setApiKeyPreview(getStoredAccountApiKeyPreview());
+    };
+    syncKey();
+    window.addEventListener('actbrow-api-key-changed', syncKey);
+    window.addEventListener('storage', syncKey);
+    return () => {
+      window.removeEventListener('actbrow-api-key-changed', syncKey);
+      window.removeEventListener('storage', syncKey);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -40,6 +64,21 @@ export default function DashboardPage() {
     fetchStats();
   }, []);
 
+  const copyApiKey = async () => {
+    const result = await copyStoredAccountApiKey();
+    if (result.ok) {
+      setApiKeyCopied(true);
+      toast({ title: 'Copied to clipboard' });
+      setTimeout(() => setApiKeyCopied(false), 2000);
+    } else {
+      toast({
+        title: 'Copy failed',
+        description: result.error,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const statCards = [
     { title: 'My Assistants', value: stats.assistants, icon: Bot },
     { title: 'Available Tools', value: stats.tools, icon: Wrench },
@@ -58,6 +97,39 @@ export default function DashboardPage() {
         <h2 className="text-3xl font-semibold text-white">Dashboard</h2>
         <p className="text-neutral-400 mt-1">Manage your AI assistants and resources</p>
       </div>
+
+      <Card className="border-white/10 bg-white/5">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-white flex items-center gap-2 text-base font-medium">
+            <Key className="h-4 w-4 text-neutral-400 shrink-0" aria-hidden />
+            API key
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-0">
+          {apiKeyPreview ? (
+            <>
+              <code
+                className="text-sm text-neutral-300 font-mono break-all bg-black/30 rounded-md px-3 py-2 border border-white/10 flex-1 min-w-0"
+                aria-label="API key preview"
+              >
+                {apiKeyPreview}
+              </code>
+              <Button
+                type="button"
+                variant="outline"
+                className="shrink-0 border-white/10 text-white gap-2"
+                onClick={() => void copyApiKey()}
+                aria-label="Copy API key"
+              >
+                {apiKeyCopied ? <Check className="h-4 w-4" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
+                Copy
+              </Button>
+            </>
+          ) : (
+            <p className="text-sm text-neutral-500">No key for this session. Sign in again.</p>
+          )}
+        </CardContent>
+      </Card>
 
       {statsError ? (
         <div

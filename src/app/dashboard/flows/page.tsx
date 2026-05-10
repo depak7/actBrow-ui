@@ -24,7 +24,7 @@ export default function FlowsPage() {
     name: '',
     triggerPhrase: '',
     enabled: true,
-    steps: [{ toolId: '', description: '' }],
+    steps: [{ toolId: '' }],
   });
 
   const activateSelectedAssistant = () => {
@@ -69,7 +69,7 @@ export default function FlowsPage() {
       return {
         action: tool.executorRef || 'app.navigate',
         target: tool.key,
-        description: s.description?.trim() || tool.displayName,
+        description: tool.displayName,
       };
     });
     try {
@@ -81,7 +81,7 @@ export default function FlowsPage() {
       });
       toast({ title: 'Success', description: 'Created' });
       setCreateDialogOpen(false);
-      setNewFlow({ name: '', triggerPhrase: '', enabled: true, steps: [{ toolId: '', description: '' }] });
+      setNewFlow({ name: '', triggerPhrase: '', enabled: true, steps: [{ toolId: '' }] });
       fetchFlows();
     }
     catch (error: unknown) {
@@ -95,11 +95,11 @@ export default function FlowsPage() {
 
   const handleDelete = async (flowId: string) => { if (!selectedAssistant) return; if (!confirm('Are you sure?')) return; try { await flowsApi.delete(selectedAssistant, flowId); toast({ title: 'Success', description: 'Deleted' }); fetchFlows(); } catch (error) { toast({ title: 'Error', description: 'Failed', variant: 'destructive' }); } };
 
-  const addStep = () => setNewFlow({ ...newFlow, steps: [...newFlow.steps, { toolId: '', description: '' }] });
+  const addStep = () => setNewFlow({ ...newFlow, steps: [...newFlow.steps, { toolId: '' }] });
   const removeStep = (index: number) => setNewFlow({ ...newFlow, steps: newFlow.steps.filter((_, i) => i !== index) });
-  const updateStep = (index: number, field: 'toolId' | 'description', value: string) => {
+  const updateStep = (index: number, value: string) => {
     const newSteps = [...newFlow.steps];
-    newSteps[index] = { ...newSteps[index], [field]: value };
+    newSteps[index] = { ...newSteps[index], toolId: value };
     setNewFlow({ ...newFlow, steps: newSteps });
   };
 
@@ -134,12 +134,12 @@ export default function FlowsPage() {
                   </p>
                 ) : null}
                 {newFlow.steps.map((step, index) => (
-                  <div key={index} className="flex flex-col sm:flex-row gap-2 sm:items-start p-3 border border-white/10 rounded-lg bg-white/5">
-                    <span className="text-sm font-medium text-neutral-400 pt-2 shrink-0">{index + 1}.</span>
+                  <div key={index} className="flex items-center gap-2 p-3 border border-white/10 rounded-lg bg-white/5">
+                    <span className="text-sm font-medium text-neutral-400 shrink-0">{index + 1}.</span>
                     <select
                       value={step.toolId}
-                      onChange={(e) => updateStep(index, 'toolId', e.target.value)}
-                      className="flex h-9 w-full sm:min-w-[200px] rounded-md border border-white/10 bg-white/5 text-white px-2 text-sm"
+                      onChange={(e) => updateStep(index, e.target.value)}
+                      className="flex h-9 flex-1 rounded-md border border-white/10 bg-white/5 text-white px-2 text-sm"
                     >
                       <option value="">Select tool…</option>
                       {assistantNavigateTools.map((t) => (
@@ -148,14 +148,8 @@ export default function FlowsPage() {
                         </option>
                       ))}
                     </select>
-                    <Input
-                      value={step.description}
-                      onChange={(e) => updateStep(index, 'description', e.target.value)}
-                      placeholder="Optional note (defaults to tool display name)"
-                      className="flex-1 border-white/10 bg-white/5 text-white"
-                    />
                     {newFlow.steps.length > 1 && (
-                      <Button type="button" variant="ghost" size="icon" onClick={() => removeStep(index)} className="text-red-400 shrink-0 self-start">
+                      <Button type="button" variant="ghost" size="icon" onClick={() => removeStep(index)} className="text-red-400 shrink-0">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     )}

@@ -139,9 +139,7 @@ export default function AssistantToolsPage() {
           <p className="text-neutral-400 text-sm max-w-2xl">
             Set default parameters per tool for this assistant (merged with what the model sends). For{' '}
             <code className="text-neutral-300">app.navigate</code>, use{' '}
-            <code className="text-neutral-300">{`{"path":"/my-profile"}`}</code>. For{' '}
-            <code className="text-neutral-300">dom.click</code>, use{' '}
-            <code className="text-neutral-300">{`{"selector":"#submit"}`}</code>, and so on.
+            <code className="text-neutral-300">{`{"path":"/my-profile"}`}</code>. Operation tools you create can have their own defaults — anything attached here becomes available to this assistant.
           </p>
         </div>
         <Button onClick={() => setAddOpen(true)} className="bg-white text-neutral-900 hover:bg-white/90">

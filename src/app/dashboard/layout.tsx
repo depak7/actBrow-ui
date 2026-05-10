@@ -13,14 +13,23 @@ import {
   Workflow,
   Wrench,
   BookOpenCheck,
+  Compass,
   LogOut,
   Menu,
   X,
   User,
   Key,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { clearSession, readStoredUser } from '@/lib/session';
+import {
+  clearSession,
+  copyStoredAccountApiKey,
+  getStoredAccountApiKeyPreview,
+  readStoredUser,
+} from '@/lib/session';
+import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardLayout({
   children,
@@ -28,16 +37,17 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userLabel, setUserLabel] = useState('');
   const [apiKeyPreview, setApiKeyPreview] = useState('');
+  const [apiKeyCopied, setApiKeyCopied] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const syncActiveKey = () => {
-      const apiKey = localStorage.getItem('actbrow_api_key');
-      setApiKeyPreview(apiKey ? (apiKey.length > 12 ? `${apiKey.slice(0, 8)}…${apiKey.slice(-4)}` : apiKey) : '');
+    const syncApiKeyPreview = () => {
+      setApiKeyPreview(getStoredAccountApiKeyPreview());
     };
     const user = readStoredUser();
 
@@ -46,12 +56,17 @@ export default function DashboardLayout({
       return;
     }
 
-    syncActiveKey();
+    syncApiKeyPreview();
     setUserLabel(user.fullName || user.email || 'Account');
     setLoading(false);
 
-    window.addEventListener('actbrow-active-assistant-changed', syncActiveKey);
-    return () => window.removeEventListener('actbrow-active-assistant-changed', syncActiveKey);
+    const onKeyOrStorage = () => syncApiKeyPreview();
+    window.addEventListener('actbrow-api-key-changed', onKeyOrStorage);
+    window.addEventListener('storage', onKeyOrStorage);
+    return () => {
+      window.removeEventListener('actbrow-api-key-changed', onKeyOrStorage);
+      window.removeEventListener('storage', onKeyOrStorage);
+    };
   }, [router]);
 
   const handleLogout = () => {
@@ -60,13 +75,24 @@ export default function DashboardLayout({
   };
 
   const copyApiKey = async () => {
-    const k = localStorage.getItem('actbrow_api_key');
-    if (k) await navigator.clipboard.writeText(k);
+    const result = await copyStoredAccountApiKey();
+    if (result.ok) {
+      setApiKeyCopied(true);
+      toast({ title: 'Copied to clipboard' });
+      setTimeout(() => setApiKeyCopied(false), 2000);
+    } else {
+      toast({
+        title: 'Copy failed',
+        description: result.error,
+        variant: 'destructive',
+      });
+    }
   };
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/dashboard/assistants', label: 'Assistants', icon: BotMessageSquare },
+    { href: '/dashboard/navigation', label: 'Navigation', icon: Compass },
     { href: '/dashboard/flows', label: 'Navigation Flows', icon: Workflow },
     { href: '/dashboard/tools', label: 'Tools', icon: Wrench },
     { href: '/dashboard/knowledge', label: 'Knowledge', icon: BookOpenCheck },
@@ -108,6 +134,31 @@ export default function DashboardLayout({
               {item.label}
             </Link>
           ))}
+          <div className="rounded-lg bg-white/5 border border-white/10 p-3 space-y-2">
+            <div className="flex items-center gap-2 text-neutral-400">
+              <Key className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              <span className="text-xs font-medium uppercase tracking-wide text-neutral-400">API key</span>
+            </div>
+            {apiKeyPreview ? (
+              <>
+                <code className="text-[10px] text-neutral-300 font-mono break-all block" aria-label="API key preview">
+                  {apiKeyPreview}
+                </code>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-white/10 text-xs text-white h-8 gap-2"
+                  onClick={() => void copyApiKey()}
+                  aria-label="Copy API key"
+                >
+                  {apiKeyCopied ? <Check className="h-3.5 w-3.5" aria-hidden /> : <Copy className="h-3.5 w-3.5" aria-hidden />}
+                  Copy
+                </Button>
+              </>
+            ) : (
+              <p className="text-xs text-neutral-500">No key for this session. Sign in again.</p>
+            )}
+          </div>
           <Button variant="ghost" className="w-full justify-start gap-3 text-neutral-400" onClick={handleLogout}>
             <LogOut className="h-4 w-4" />
             Logout
@@ -151,18 +202,27 @@ export default function DashboardLayout({
             )}
             <div className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 space-y-2">
               <div className="flex items-center gap-2 text-neutral-400">
-                <Key className="h-3.5 w-3.5" />
-                <span className="text-xs font-medium uppercase tracking-wide">Account API key</span>
+                <Key className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <span className="text-xs font-medium uppercase tracking-wide text-neutral-400">API key</span>
               </div>
               {apiKeyPreview ? (
                 <>
-                  <code className="text-[10px] text-neutral-300 font-mono break-all block">{apiKeyPreview}</code>
-                  <Button variant="outline" size="sm" className="w-full border-white/10 text-xs text-white h-8" onClick={copyApiKey}>
-                    Copy full key
+                  <code className="text-[10px] text-neutral-300 font-mono break-all block" aria-label="API key preview">
+                    {apiKeyPreview}
+                  </code>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full border-white/10 text-xs text-white h-8 gap-2"
+                    onClick={() => void copyApiKey()}
+                    aria-label="Copy API key"
+                  >
+                    {apiKeyCopied ? <Check className="h-3.5 w-3.5" aria-hidden /> : <Copy className="h-3.5 w-3.5" aria-hidden />}
+                    Copy
                   </Button>
                 </>
               ) : (
-                <p className="text-xs text-neutral-500">Sign in again to refresh your account key.</p>
+                <p className="text-xs text-neutral-500">No key for this session. Sign in again.</p>
               )}
             </div>
             <Button variant="ghost" className="w-full justify-start gap-3 text-neutral-400 hover:text-white" onClick={handleLogout}>
