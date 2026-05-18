@@ -44,7 +44,22 @@ export const toolsApi = {
   create: (data: Partial<Tool>) => api.post<Tool>('/v1/tools', data).then((res) => res.data),
   createAndAttach: (data: CreateAssistantToolPayload) =>
     api.post<Tool>('/v1/tools/attach', data).then((res) => res.data),
-  update: (id: string, data: Partial<Tool>) => api.put<Tool>(`/v1/tools/${id}`, data).then((res) => res.data),
+  update: (
+    id: string,
+    data: {
+      key?: string | null;
+      displayName: string;
+      description: string;
+      inputSchema: Record<string, unknown>;
+      outputSchema?: Record<string, unknown> | null;
+      type: Tool['type'];
+      version: string;
+      enabled: boolean;
+      executorRef: string | null;
+      defaultArguments?: Record<string, unknown> | null;
+      metadata?: Record<string, unknown> | null;
+    }
+  ) => api.put<Tool>(`/v1/tools/${id}`, data).then((res) => res.data),
   delete: (id: string) => api.delete(`/v1/tools/${id}`),
 };
 

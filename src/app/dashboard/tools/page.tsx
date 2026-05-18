@@ -8,12 +8,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { assistantsApi, assistantToolsApi, toolsApi } from '@/lib/api';
 import type { Assistant, Tool } from '@/types';
-import { Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { readStoredUserId, setActiveAssistant } from '@/lib/session';
 import { parseCurl, type ParsedCurl } from '@/lib/curl-parser';
+import { buildSyntheticCurlFromTool } from '@/lib/curl-from-tool';
 
 type FormState = {
   curl: string;
@@ -22,6 +23,7 @@ type FormState = {
   displayName: string;
   description: string;
   paramKeys: Set<string>;
+  execution: 'server' | 'browser';
   enabled: boolean;
 };
 
@@ -32,8 +34,58 @@ const emptyForm = (): FormState => ({
   displayName: '',
   description: '',
   paramKeys: new Set(),
+  execution: 'server',
   enabled: true,
 });
+
+function buildHttpToolPayload(form: FormState, parsed: ParsedCurl) {
+  const bodyObject = (parsed.body && typeof parsed.body === 'object' && !Array.isArray(parsed.body))
+    ? (parsed.body as Record<string, unknown>)
+    : {};
+
+  const inputProps: Record<string, { type: string }> = {};
+  const required: string[] = [];
+  const defaults: Record<string, unknown> = {};
+  for (const key of parsed.bodyKeys) {
+    if (form.paramKeys.has(key)) {
+      const sample = bodyObject[key];
+      const t = sample === null ? 'string'
+        : Array.isArray(sample) ? 'array'
+        : typeof sample === 'number' ? 'number'
+        : typeof sample === 'boolean' ? 'boolean'
+        : typeof sample === 'object' ? 'object'
+        : 'string';
+      inputProps[key] = { type: t };
+      required.push(key);
+    } else {
+      defaults[key] = bodyObject[key];
+    }
+  }
+
+  const inputSchema = {
+    type: 'object',
+    properties: inputProps,
+    ...(required.length ? { required } : {}),
+  };
+  const description = form.description.trim()
+    || `${parsed.method} ${parsed.url}`;
+
+  const metadata: Record<string, unknown> = {
+    method: parsed.method,
+    baseUrl: parsed.baseUrl,
+    path: parsed.path,
+    headers: parsed.headers,
+    execution: form.execution,
+    ...(form.execution === 'browser' ? { credentials: 'include' } : {}),
+  };
+
+  return {
+    description,
+    inputSchema,
+    defaultArguments: Object.keys(defaults).length ? defaults : null,
+    metadata,
+  };
+}
 
 export default function ToolsPage() {
   const { toast } = useToast();
@@ -42,7 +94,8 @@ export default function ToolsPage() {
   const [pageAssistantId, setPageAssistantId] = useState('');
   const [assistantsLoading, setAssistantsLoading] = useState(true);
   const [toolsLoading, setToolsLoading] = useState(false);
-  const [createOpen, setCreateOpen] = useState(false);
+  const [toolDialogOpen, setToolDialogOpen] = useState(false);
+  const [editingTool, setEditingTool] = useState<Tool | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
 
   useEffect(() => {
@@ -130,11 +183,41 @@ export default function ToolsPage() {
     });
   };
 
-  const handleCreate = async () => {
-    if (!pageAssistantId) {
-      toast({ title: 'Choose an assistant', variant: 'destructive' });
-      return;
+  const openCreateDialog = () => {
+    setEditingTool(null);
+    setForm(emptyForm());
+    setToolDialogOpen(true);
+  };
+
+  const openEditDialog = (tool: Tool) => {
+    try {
+      const curl = buildSyntheticCurlFromTool(tool);
+      const parsed = parseCurl(curl);
+      const paramKeys = new Set(Object.keys((tool.inputSchema?.properties ?? {}) as Record<string, unknown>));
+      const meta = (tool.metadata ?? {}) as { execution?: string };
+      setEditingTool(tool);
+      setForm({
+        curl,
+        parsed,
+        parseError: null,
+        displayName: tool.displayName,
+        description: tool.description ?? '',
+        paramKeys,
+        execution: meta.execution === 'browser' ? 'browser' : 'server',
+        enabled: tool.enabled,
+      });
+      setToolDialogOpen(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      toast({
+        title: 'Could not open editor',
+        description: message,
+        variant: 'destructive',
+      });
     }
+  };
+
+  const handleSaveTool = async () => {
     if (!form.parsed) {
       toast({ title: 'Paste a curl command', description: form.parseError ?? 'Nothing to parse yet.', variant: 'destructive' });
       return;
@@ -143,59 +226,48 @@ export default function ToolsPage() {
       toast({ title: 'Tool name required', description: 'e.g. createUser, listOrders.', variant: 'destructive' });
       return;
     }
-    const parsed = form.parsed;
-    const bodyObject = (parsed.body && typeof parsed.body === 'object' && !Array.isArray(parsed.body))
-      ? (parsed.body as Record<string, unknown>)
-      : {};
-
-    const inputProps: Record<string, { type: string }> = {};
-    const required: string[] = [];
-    const defaults: Record<string, unknown> = {};
-    for (const key of parsed.bodyKeys) {
-      if (form.paramKeys.has(key)) {
-        const sample = bodyObject[key];
-        const t = sample === null ? 'string'
-          : Array.isArray(sample) ? 'array'
-          : typeof sample === 'number' ? 'number'
-          : typeof sample === 'boolean' ? 'boolean'
-          : typeof sample === 'object' ? 'object'
-          : 'string';
-        inputProps[key] = { type: t };
-        required.push(key);
-      } else {
-        defaults[key] = bodyObject[key];
-      }
+    if (!editingTool && !pageAssistantId) {
+      toast({ title: 'Choose an assistant', variant: 'destructive' });
+      return;
     }
-
-    const inputSchema = {
-      type: 'object',
-      properties: inputProps,
-      ...(required.length ? { required } : {}),
-    };
-    const description = form.description.trim()
-      || `${parsed.method} ${parsed.url}`;
+    const parsed = form.parsed;
+    const { description, inputSchema, defaultArguments, metadata } = buildHttpToolPayload(form, parsed);
+    const displayName = form.displayName.trim();
 
     try {
-      await toolsApi.createAndAttach({
-        assistantId: pageAssistantId,
-        displayName: form.displayName.trim(),
-        description,
-        type: 'SERVER_HTTP',
-        version: '1',
-        enabled: form.enabled,
-        executorRef: form.displayName.trim(),
-        inputSchema,
-        outputSchema: null,
-        defaultArguments: Object.keys(defaults).length ? defaults : null,
-        metadata: {
-          method: parsed.method,
-          baseUrl: parsed.baseUrl,
-          path: parsed.path,
-          headers: parsed.headers,
-        },
-      });
-      toast({ title: 'Created', description: `${form.displayName.trim()} attached` });
-      setCreateOpen(false);
+      if (editingTool) {
+        await toolsApi.update(editingTool.id, {
+          key: editingTool.key,
+          displayName,
+          description,
+          type: 'SERVER_HTTP',
+          version: editingTool.version,
+          enabled: form.enabled,
+          executorRef: displayName,
+          inputSchema,
+          outputSchema: editingTool.outputSchema,
+          defaultArguments,
+          metadata,
+        });
+        toast({ title: 'Saved', description: `${displayName} updated` });
+      } else {
+        await toolsApi.createAndAttach({
+          assistantId: pageAssistantId,
+          displayName,
+          description,
+          type: 'SERVER_HTTP',
+          version: '1',
+          enabled: form.enabled,
+          executorRef: displayName,
+          inputSchema,
+          outputSchema: null,
+          defaultArguments,
+          metadata,
+        });
+        toast({ title: 'Created', description: `${displayName} attached` });
+      }
+      setToolDialogOpen(false);
+      setEditingTool(null);
       setForm(emptyForm());
       await refresh();
     } catch (error: unknown) {
@@ -203,7 +275,11 @@ export default function ToolsPage() {
         typeof error === 'object' && error !== null && 'response' in error
           ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
           : undefined;
-      toast({ title: 'Error', description: msg || 'Failed to create tool', variant: 'destructive' });
+      toast({
+        title: 'Error',
+        description: msg || (editingTool ? 'Failed to update tool' : 'Failed to create tool'),
+        variant: 'destructive',
+      });
     }
   };
 
@@ -248,10 +324,7 @@ export default function ToolsPage() {
             type="button"
             disabled={!pageAssistantId}
             className="bg-white text-neutral-900 hover:bg-white/90 disabled:opacity-50"
-            onClick={() => {
-              setForm(emptyForm());
-              setCreateOpen(true);
-            }}
+            onClick={openCreateDialog}
           >
             <Plus className="h-4 w-4 mr-2" />
             Add HTTP tool
@@ -259,12 +332,23 @@ export default function ToolsPage() {
         </div>
       </div>
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+      <Dialog
+        open={toolDialogOpen}
+        onOpenChange={(open) => {
+          setToolDialogOpen(open);
+          if (!open) {
+            setEditingTool(null);
+            setForm(emptyForm());
+          }
+        }}
+      >
         <DialogContent className="border-white/10 bg-neutral-900 max-h-[85vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-white">Add HTTP tool</DialogTitle>
+            <DialogTitle className="text-white">{editingTool ? 'Edit HTTP tool' : 'Add HTTP tool'}</DialogTitle>
             <DialogDescription className="text-neutral-400">
-              Paste a curl command. We extract the method, URL, headers, and body. Mark the body fields you want the model to fill at call time.
+              {editingTool
+                ? 'Adjust the curl, body field bindings, or metadata. Saving updates this tool for every assistant that uses it.'
+                : 'Paste a curl command. We extract the method, URL, headers, and body. Mark the body fields you want the model to fill at call time.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -350,6 +434,27 @@ export default function ToolsPage() {
               </p>
             </div>
 
+            <div className="grid gap-2">
+              <Label className="text-white">Executor</Label>
+              <select
+                value={form.execution}
+                onChange={(e) => {
+                  const execution = e.target.value as FormState['execution'];
+                  setForm({
+                    ...form,
+                    execution,
+                  });
+                }}
+                className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white"
+              >
+                <option value="server">ActBrow backend</option>
+                <option value="browser">Browser</option>
+              </select>
+              <p className="text-xs text-neutral-500">
+                Browser only runs the request inside the ActBrow browser tab. Backend runs from our servers with no tab context.
+              </p>
+            </div>
+
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -366,18 +471,18 @@ export default function ToolsPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setCreateOpen(false)}
+              onClick={() => setToolDialogOpen(false)}
               className="border-white/10 text-neutral-300"
             >
               Cancel
             </Button>
             <Button
               type="button"
-              onClick={handleCreate}
+              onClick={handleSaveTool}
               disabled={!form.parsed}
               className="bg-white text-neutral-900 hover:bg-white/90 disabled:opacity-50"
             >
-              Create tool
+              {editingTool ? 'Save changes' : 'Create tool'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -397,6 +502,7 @@ export default function ToolsPage() {
               <TableRow className="border-white/10">
                 <TableHead className="text-neutral-400">Name</TableHead>
                 <TableHead className="text-neutral-400">Method</TableHead>
+                <TableHead className="text-neutral-400">Runs in</TableHead>
                 <TableHead className="text-neutral-400">Endpoint</TableHead>
                 <TableHead className="text-neutral-400">Description</TableHead>
                 <TableHead className="text-neutral-400">Enabled</TableHead>
@@ -406,28 +512,31 @@ export default function ToolsPage() {
             <TableBody>
               {!pageAssistantId ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-neutral-500">
+                  <TableCell colSpan={7} className="text-center py-8 text-neutral-500">
                     Select an assistant above to view its HTTP tools.
                   </TableCell>
                 </TableRow>
               ) : toolsLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-neutral-500">Loading…</TableCell>
+                  <TableCell colSpan={7} className="text-center py-8 text-neutral-500">Loading…</TableCell>
                 </TableRow>
               ) : tools.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-neutral-500">
+                  <TableCell colSpan={7} className="text-center py-8 text-neutral-500">
                     No HTTP tools yet. Use “Add HTTP tool” and paste a curl.
                   </TableCell>
                 </TableRow>
               ) : (
                 tools.map((tool) => {
-                  const meta = (tool.metadata ?? {}) as { method?: string; baseUrl?: string; path?: string };
+                  const meta = (tool.metadata ?? {}) as { method?: string; baseUrl?: string; path?: string; execution?: string };
                   const endpoint = `${meta.baseUrl ?? ''}${meta.path ?? ''}` || '—';
                   return (
                     <TableRow key={tool.id} className="border-white/10 hover:bg-white/5">
                       <TableCell className="text-neutral-300">{tool.displayName}</TableCell>
                       <TableCell className="text-sm font-mono text-neutral-400">{meta.method ?? '—'}</TableCell>
+                      <TableCell className="text-sm text-neutral-400">
+                        {meta.execution === 'browser' ? 'Browser' : 'Backend'}
+                      </TableCell>
                       <TableCell className="max-w-xs truncate text-sm font-mono text-neutral-400">{endpoint}</TableCell>
                       <TableCell className="max-w-md truncate text-sm text-neutral-500">{tool.description}</TableCell>
                       <TableCell>
@@ -442,15 +551,26 @@ export default function ToolsPage() {
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-red-400 hover:text-red-300"
-                          onClick={() => handleDelete(tool.id, tool.displayName)}
-                          aria-label={`Delete ${tool.displayName}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="inline-flex justify-end gap-0.5">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-neutral-300 hover:text-white"
+                            onClick={() => openEditDialog(tool)}
+                            aria-label={`Edit ${tool.displayName}`}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-red-400 hover:text-red-300"
+                            onClick={() => handleDelete(tool.id, tool.displayName)}
+                            aria-label={`Delete ${tool.displayName}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
