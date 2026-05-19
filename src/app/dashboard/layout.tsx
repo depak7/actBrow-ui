@@ -14,6 +14,7 @@ import {
   Wrench,
   BookOpenCheck,
   Compass,
+  PlugZap,
   LogOut,
   Menu,
   X,
@@ -92,6 +93,7 @@ export default function DashboardLayout({
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/dashboard/assistants', label: 'Assistants', icon: BotMessageSquare },
+    { href: '/dashboard/connect', label: 'Connect', icon: PlugZap },
     { href: '/dashboard/navigation', label: 'Navigation', icon: Compass },
     { href: '/dashboard/flows', label: 'Navigation Flows', icon: Workflow },
     { href: '/dashboard/tools', label: 'Tools', icon: Wrench },

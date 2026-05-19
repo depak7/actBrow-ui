@@ -14,6 +14,19 @@ export interface Assistant {
   createdAt: string;
 }
 
+export interface AssistantConnect {
+  assistantId: string;
+  assistantName: string;
+  baseUrl: string;
+  setupKey: string;
+  widgetKey: string;
+  setupPrompt: string;
+  lastSyncedAt: string | null;
+  lastSyncSummary: Record<string, unknown>;
+  allowedOrigins: string[];
+  embedSnippet: string | null;
+}
+
 export interface NavigationFlow {
   id: string;
   assistantId: string;

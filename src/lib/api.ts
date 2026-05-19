@@ -1,5 +1,5 @@
 import api from './api-client';
-import type { Assistant, NavigationFlow, Tool, Conversation, Run, KnowledgeDocument } from '@/types';
+import type { Assistant, NavigationFlow, Tool, Conversation, Run, KnowledgeDocument, AssistantConnect } from '@/types';
 
 export const assistantsApi = {
   list: (userId?: string) => {
@@ -11,6 +11,11 @@ export const assistantsApi = {
   update: (id: string, data: { name: string; systemPrompt?: string; model?: string; usePredefinedFlows: boolean; userId: string }) =>
     api.put<Assistant>(`/v1/assistants/${id}`, data).then((res) => res.data),
   delete: (id: string) => api.delete(`/v1/assistants/${id}`),
+};
+
+export const connectApi = {
+  get: (assistantId: string) =>
+    api.get<AssistantConnect>(`/v1/assistants/${assistantId}/connect`).then((res) => res.data),
 };
 
 export const flowsApi = {
