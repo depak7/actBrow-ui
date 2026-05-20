@@ -137,7 +137,7 @@ export default function AssistantsPage() {
                   <TableRow key={assistant.id} className="border-white/10 hover:bg-white/5">
                     <TableCell className="font-medium text-white">{assistant.name}</TableCell>
                     <TableCell className="font-mono text-xs text-neutral-400">{assistant.key}</TableCell>
-                    <TableCell className="text-sm text-neutral-300">Gemini</TableCell>
+                    <TableCell className="text-sm text-neutral-300 font-mono text-xs">{assistant.model || 'default'}</TableCell>
                     <TableCell><span className={`px-2 py-1 rounded-full text-xs font-medium ${assistant.usePredefinedFlows ? 'bg-white/20 text-white border border-white/30' : 'bg-white/5 text-neutral-500 border border-white/10'}`}>{assistant.usePredefinedFlows ? 'Yes' : 'No'}</span></TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
