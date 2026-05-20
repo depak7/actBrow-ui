@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { assistantsApi, connectApi } from '@/lib/api';
 import type { Assistant, AssistantConnect } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { Copy, Check, RefreshCw, PlugZap } from 'lucide-react';
+import { RefreshCw, PlugZap } from 'lucide-react';
+import { CodePanel } from '@/components/code-panel';
 import { readStoredUserId, setActiveAssistant } from '@/lib/session';
 
 export default function ConnectPage() {
@@ -16,7 +17,6 @@ export default function ConnectPage() {
   const [connect, setConnect] = useState<AssistantConnect | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const loadAssistants = useCallback(async () => {
     const userId = readStoredUserId();
@@ -63,13 +63,6 @@ export default function ConnectPage() {
       loadConnect(assistantId);
     }
   }, [assistantId, loadConnect]);
-
-  const copyText = async (label: string, value: string) => {
-    await navigator.clipboard.writeText(value);
-    setCopiedField(label);
-    toast({ title: 'Copied', description: label });
-    setTimeout(() => setCopiedField(null), 2000);
-  };
 
   const syncSummaryText = connect?.lastSyncSummary
     ? JSON.stringify(connect.lastSyncSummary, null, 2)
@@ -130,19 +123,13 @@ export default function ConnectPage() {
               <p className="text-sm text-neutral-300">
                 Open your app repository in Claude Code, Codex, or Cursor. Paste this entire prompt. The agent will scan routes, APIs, and docs, then push configuration to Actbrow.
               </p>
-              <div className="relative">
-                <pre className="max-h-[420px] overflow-auto rounded-xl border border-white/10 bg-black/40 p-4 text-xs text-neutral-200 whitespace-pre-wrap">
-                  {connect.setupPrompt}
-                </pre>
-                <Button
-                  size="sm"
-                  className="absolute right-3 top-3 bg-white text-neutral-900 hover:bg-white/90"
-                  onClick={() => copyText('Setup prompt', connect.setupPrompt)}
-                >
-                  {copiedField === 'Setup prompt' ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-                  Copy prompt
-                </Button>
-              </div>
+              <CodePanel
+                code={connect.setupPrompt}
+                filename="actbrow-setup.md"
+                language="text"
+                maxHeight="max-h-[460px]"
+                copyLabel="Copy prompt"
+              />
             </CardContent>
           </Card>
 
@@ -158,9 +145,13 @@ export default function ConnectPage() {
                     {connect.lastSyncedAt ? new Date(connect.lastSyncedAt).toLocaleString() : 'Not yet'}
                   </span>
                 </p>
-                <pre className="overflow-auto rounded-lg border border-white/10 bg-black/30 p-3 text-xs text-neutral-400">
-                  {syncSummaryText}
-                </pre>
+                <CodePanel
+                  code={syncSummaryText}
+                  filename="sync-status.json"
+                  language="json"
+                  maxHeight="max-h-56"
+                  copyLabel="Copy status"
+                />
                 <p className="text-neutral-500">
                   Review pushed config under Navigation, Tools, Flows, and Knowledge in this dashboard.
                 </p>
@@ -173,19 +164,13 @@ export default function ConnectPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {connect.embedSnippet ? (
-                  <>
-                    <pre className="max-h-64 overflow-auto rounded-lg border border-white/10 bg-black/30 p-3 text-xs text-neutral-300 whitespace-pre-wrap">
-                      {connect.embedSnippet}
-                    </pre>
-                    <Button
-                      variant="outline"
-                      className="border-white/10 text-neutral-200"
-                      onClick={() => copyText('Embed snippet', connect.embedSnippet || '')}
-                    >
-                      {copiedField === 'Embed snippet' ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-                      Copy embed snippet
-                    </Button>
-                  </>
+                  <CodePanel
+                    code={connect.embedSnippet}
+                    filename="embed.html"
+                    language="html"
+                    maxHeight="max-h-72"
+                    copyLabel="Copy embed snippet"
+                  />
                 ) : (
                   <p className="text-sm text-neutral-500">Available after the first successful sync.</p>
                 )}
