@@ -1,5 +1,5 @@
 import api from './api-client';
-import type { Assistant, NavigationFlow, Tool, Conversation, Run, KnowledgeDocument, AssistantConnect } from '@/types';
+import type { Assistant, NavigationFlow, Tool, Conversation, ConversationMessage, Run, KnowledgeDocument, AssistantConnect, ApiIntegration, ImportApiSpecResult } from '@/types';
 
 export const assistantsApi = {
   list: (userId?: string) => {
@@ -81,6 +81,20 @@ export const assistantToolsApi = {
     api.delete(`/v1/assistants/${assistantId}/tools/${toolId}`),
 };
 
+export const apiIntegrationsApi = {
+  list: (assistantId: string) =>
+    api.get<ApiIntegration[]>(`/v1/assistants/${assistantId}/api-integrations`).then((res) => res.data),
+  import: (
+    assistantId: string,
+    data: { name: string; specContent: string; baseUrlOverride?: string | null; allowCrossOrigin?: boolean }
+  ) =>
+    api
+      .post<ImportApiSpecResult>(`/v1/assistants/${assistantId}/api-integrations/import`, data)
+      .then((res) => res.data),
+  delete: (assistantId: string, integrationId: string) =>
+    api.delete(`/v1/assistants/${assistantId}/api-integrations/${integrationId}`),
+};
+
 export const knowledgeApi = {
   list: (assistantId: string) =>
     api.get<KnowledgeDocument[]>(`/v1/assistants/${assistantId}/knowledge`).then((res) => res.data),
@@ -96,7 +110,7 @@ export const conversationsApi = {
   list: () => api.get<Conversation[]>('/v1/conversations').then((res) => res.data),
   create: (data: { assistantId: string }) => api.post<Conversation>('/v1/conversations', data).then((res) => res.data),
   delete: (id: string) => api.delete(`/v1/conversations/${id}`),
-  getMessages: (id: string) => api.get(`/v1/conversations/${id}/messages`).then((res) => res.data),
+  getMessages: (id: string) => api.get<ConversationMessage[]>(`/v1/conversations/${id}/messages`).then((res) => res.data),
 };
 
 export const runsApi = {

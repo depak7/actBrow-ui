@@ -59,6 +59,26 @@ export interface Tool {
   createdAt: string;
 }
 
+export interface ApiIntegration {
+  id: string;
+  assistantId: string;
+  name: string;
+  baseUrl: string | null;
+  allowCrossOrigin: boolean;
+  toolKeys: string[];
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface ImportApiSpecResult {
+  integrationId: string;
+  name: string;
+  created: number;
+  updated: number;
+  removed: number;
+  toolKeys: string[];
+}
+
 export interface KnowledgeDocument {
   id: string;
   assistantId: string;
@@ -73,6 +93,18 @@ export interface KnowledgeDocument {
 export interface Conversation {
   id: string;
   assistantId: string;
+  assistantName?: string;
+  createdAt: string;
+  lastMessageAt?: string | null;
+  messageCount?: number;
+  lastMessageRole?: string | null;
+  lastMessagePreview?: string;
+}
+
+export interface ConversationMessage {
+  id: string;
+  role: 'USER' | 'ASSISTANT' | 'TOOL';
+  content: string;
   createdAt: string;
 }
 

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 const DEFAULT_BASE = "http://localhost:8080";
 /** Bump when actbrow-sdk.js changes so browsers fetch the latest bundle. */
-const SDK_ASSET_VERSION = "3";
+const SDK_ASSET_VERSION = "6";
 
 export default function AssistantBoot() {
   const router = useRouter();
