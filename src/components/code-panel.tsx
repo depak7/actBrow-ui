@@ -31,7 +31,7 @@ function highlightJsonLine(line: string): ReactNode[] {
   const keyMatch = line.match(/^(\s*)"([^"]+)":(.*)$/);
   if (keyMatch) {
     parts.push(keyMatch[1]);
-    parts.push(<span key="k" className="text-sky-300">&quot;{keyMatch[2]}&quot;</span>);
+    parts.push(<span key="k" className="text-teal-300">&quot;{keyMatch[2]}&quot;</span>);
     parts.push(':');
     const rest = keyMatch[3].trim();
     if (rest.startsWith('"')) {
@@ -74,7 +74,7 @@ function highlightHtmlLine(line: string): ReactNode[] {
       );
     } else {
       parts.push(
-        <span key={key++} className="text-sky-300">
+        <span key={key++} className="text-teal-300">
           {text}
         </span>,
       );
