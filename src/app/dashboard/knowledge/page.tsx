@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import posthog from 'posthog-js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -92,6 +93,11 @@ export default function KnowledgePage() {
       setDialogOpen(false);
       setDraft(emptyDraft);
       await loadDocuments(assistantId);
+      posthog.capture('knowledge_document_created', {
+        assistant_id: assistantId,
+        has_source: !!draft.source.trim(),
+        enabled: draft.enabled,
+      });
       toast({ title: 'Saved', description: 'Knowledge document added to this assistant.' });
     } catch {
       toast({ title: 'Error', description: 'Failed to save knowledge', variant: 'destructive' });
@@ -105,6 +111,7 @@ export default function KnowledgePage() {
     try {
       await knowledgeApi.delete(assistantId, doc.id);
       await loadDocuments(assistantId);
+      posthog.capture('knowledge_document_deleted', { assistant_id: assistantId, document_id: doc.id });
       toast({ title: 'Deleted', description: doc.title });
     } catch {
       toast({ title: 'Error', description: 'Failed to delete document', variant: 'destructive' });

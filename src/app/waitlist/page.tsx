@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BrandLogo } from '@/components/brand-logo';
 import { API_BASE_URL } from '@/types';
 import { Bot, Mail, CheckCircle2, ArrowLeft, Users, Zap, Shield } from 'lucide-react';
+import posthog from 'posthog-js';
 
 export default function WaitlistPage() {
   const router = useRouter();
@@ -39,6 +40,10 @@ export default function WaitlistPage() {
         throw new Error(error.message || 'Failed to join waitlist');
       }
 
+      posthog.capture('waitlist_form_submitted', {
+        has_company: !!formData.company,
+        has_use_case: !!formData.useCase,
+      });
       setSubmitted(true);
     } catch (error: any) {
       alert(error.message || 'Failed to join waitlist. Please try again.');

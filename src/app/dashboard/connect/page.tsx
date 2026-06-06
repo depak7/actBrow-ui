@@ -1,14 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import posthog from 'posthog-js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { assistantsApi, connectApi } from '@/lib/api';
 import type { Assistant, AssistantConnect } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { RefreshCw, PlugZap } from 'lucide-react';
+import { RefreshCw, PlugZap, Plus } from 'lucide-react';
 import { CodePanel } from '@/components/code-panel';
 import { readStoredUserId, setActiveAssistant } from '@/lib/session';
+import Link from 'next/link';
 
 export default function ConnectPage() {
   const { toast } = useToast();
@@ -28,6 +30,9 @@ export default function ConnectPage() {
     if (!assistantId && data.length > 0) {
       setAssistantId(data[0].id);
       setActiveAssistant(data[0]);
+    } else if (data.length === 0) {
+      // No assistants yet — nothing to connect, so stop the spinner.
+      setLoading(false);
     }
   }, [assistantId]);
 
@@ -41,7 +46,12 @@ export default function ConnectPage() {
     try {
       const assistant = assistants.find((a) => a.id === currentAssistantId);
       if (assistant) setActiveAssistant(assistant);
-      setConnect(await connectApi.get(currentAssistantId));
+      const connectData = await connectApi.get(currentAssistantId);
+      setConnect(connectData);
+      posthog.capture('connect_setup_viewed', {
+        assistant_id: currentAssistantId,
+        has_synced: !!connectData.lastSyncedAt,
+      });
     } catch {
       toast({ title: 'Error', description: 'Failed to load connect setup', variant: 'destructive' });
       setConnect(null);
@@ -77,39 +87,65 @@ export default function ConnectPage() {
         </p>
       </div>
 
-      <Card className="border-white/10 bg-white/5">
-        <CardHeader>
-          <CardTitle className="text-white">Assistant</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <select
-            value={assistantId}
-            onChange={(e) => setAssistantId(e.target.value)}
-            className="flex h-10 w-full max-w-md rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white"
-          >
-            <option value="">Select assistant…</option>
-            {assistants.map((assistant) => (
-              <option key={assistant.id} value={assistant.id}>
-                {assistant.name}
-              </option>
-            ))}
-          </select>
-          <Button
-            variant="outline"
-            className="border-white/10 text-neutral-200"
-            disabled={!assistantId || refreshing}
-            onClick={() => loadConnect(assistantId)}
-          >
-            <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh status
-          </Button>
-        </CardContent>
-      </Card>
+      {!loading && assistants.length > 0 && (
+        <Card className="border-white/10 bg-white/5">
+          <CardHeader>
+            <CardTitle className="text-white">Assistant</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <select
+              value={assistantId}
+              onChange={(e) => setAssistantId(e.target.value)}
+              className="flex h-10 w-full max-w-md rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white"
+            >
+              <option value="">Select assistant…</option>
+              {assistants.map((assistant) => (
+                <option key={assistant.id} value={assistant.id}>
+                  {assistant.name}
+                </option>
+              ))}
+            </select>
+            <Button
+              variant="outline"
+              className="border-white/10 text-neutral-200"
+              disabled={!assistantId || refreshing}
+              onClick={() => loadConnect(assistantId)}
+            >
+              <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh status
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {loading ? (
-        <p className="text-neutral-500">Loading…</p>
+        <Card className="border-white/10 bg-white/5">
+          <CardContent className="py-12 text-center text-neutral-500">Loading…</CardContent>
+        </Card>
+      ) : assistants.length === 0 ? (
+        <Card className="border-white/10 bg-white/5">
+          <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
+            <PlugZap className="h-10 w-10 text-neutral-600" />
+            <div>
+              <p className="text-lg font-medium text-white">No assistants yet</p>
+              <p className="mt-1 text-sm text-neutral-400">
+                Create your first assistant to get a setup prompt and connect your app.
+              </p>
+            </div>
+            <Button asChild className="bg-white text-neutral-900 hover:bg-white/90">
+              <Link href="/dashboard/assistants">
+                <Plus className="mr-2 h-4 w-4" />
+                Create assistant
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
       ) : !assistantId || !connect ? (
-        <p className="text-neutral-500">Select an assistant to get the setup prompt.</p>
+        <Card className="border-white/10 bg-white/5">
+          <CardContent className="py-12 text-center text-neutral-500">
+            Select an assistant to get the setup prompt.
+          </CardContent>
+        </Card>
       ) : (
         <>
           <Card className="border-emerald-500/20 bg-emerald-500/5">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import posthog from 'posthog-js';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -79,6 +80,11 @@ export default function FlowsPage() {
         enabled: newFlow.enabled,
         steps,
       });
+      posthog.capture('flow_created', {
+        assistant_id: selectedAssistant,
+        step_count: steps.length,
+        enabled: newFlow.enabled,
+      });
       toast({ title: 'Success', description: 'Created' });
       setCreateDialogOpen(false);
       setNewFlow({ name: '', triggerPhrase: '', enabled: true, steps: [{ toolId: '' }] });
@@ -93,7 +99,18 @@ export default function FlowsPage() {
     }
   };
 
-  const handleDelete = async (flowId: string) => { if (!selectedAssistant) return; if (!confirm('Are you sure?')) return; try { await flowsApi.delete(selectedAssistant, flowId); toast({ title: 'Success', description: 'Deleted' }); fetchFlows(); } catch (error) { toast({ title: 'Error', description: 'Failed', variant: 'destructive' }); } };
+  const handleDelete = async (flowId: string) => {
+    if (!selectedAssistant) return;
+    if (!confirm('Are you sure?')) return;
+    try {
+      await flowsApi.delete(selectedAssistant, flowId);
+      posthog.capture('flow_deleted', { flow_id: flowId, assistant_id: selectedAssistant });
+      toast({ title: 'Success', description: 'Deleted' });
+      fetchFlows();
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed', variant: 'destructive' });
+    }
+  };
 
   const addStep = () => setNewFlow({ ...newFlow, steps: [...newFlow.steps, { toolId: '' }] });
   const removeStep = (index: number) => setNewFlow({ ...newFlow, steps: newFlow.steps.filter((_, i) => i !== index) });

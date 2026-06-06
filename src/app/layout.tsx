@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import AssistantBoot from "@/components/assistant-boot";
+import { PostHogProvider } from "./posthog-provider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -30,9 +31,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="antialiased font-sans">
-        <AssistantBoot />
-        {children}
-        <Toaster />
+        <PostHogProvider>
+          <AssistantBoot />
+          {children}
+          <Toaster />
+        </PostHogProvider>
       </body>
     </html>
   );
