@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import posthog from 'posthog-js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -94,6 +95,16 @@ export default function IntegrationsPage() {
       setDialogOpen(false);
       setDraft(emptyDraft);
       await loadIntegrations(assistantId);
+      posthog.capture('api_integration_imported', {
+        assistant_id: assistantId,
+        integration_name: draft.name.trim(),
+        tools_created: result.created,
+        tools_updated: result.updated,
+        tools_removed: result.removed ?? 0,
+        tools_total: result.toolKeys.length,
+        allow_cross_origin: draft.allowCrossOrigin,
+        has_base_url_override: !!draft.baseUrlOverride.trim(),
+      });
       toast({
         title: 'Imported',
         description: `${result.created} created, ${result.updated} updated${result.removed ? `, ${result.removed} removed` : ''} · ${result.toolKeys.length} tools total.`,
@@ -116,6 +127,12 @@ export default function IntegrationsPage() {
     try {
       await apiIntegrationsApi.delete(assistantId, integration.id);
       await loadIntegrations(assistantId);
+      posthog.capture('api_integration_deleted', {
+        assistant_id: assistantId,
+        integration_id: integration.id,
+        integration_name: integration.name,
+        tool_count: integration.toolKeys.length,
+      });
       toast({ title: 'Deleted', description: integration.name });
     } catch {
       toast({ title: 'Error', description: 'Failed to delete integration', variant: 'destructive' });

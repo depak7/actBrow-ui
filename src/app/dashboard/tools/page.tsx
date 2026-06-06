@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import posthog from 'posthog-js';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -249,6 +250,12 @@ export default function ToolsPage() {
           defaultArguments,
           metadata,
         });
+        posthog.capture('tool_updated', {
+          tool_id: editingTool.id,
+          tool_name: displayName,
+          execution: form.execution,
+          param_count: form.paramKeys.size,
+        });
         toast({ title: 'Saved', description: `${displayName} updated` });
       } else {
         await toolsApi.createAndAttach({
@@ -263,6 +270,12 @@ export default function ToolsPage() {
           outputSchema: null,
           defaultArguments,
           metadata,
+        });
+        posthog.capture('tool_created', {
+          assistant_id: pageAssistantId,
+          tool_name: displayName,
+          execution: form.execution,
+          param_count: form.paramKeys.size,
         });
         toast({ title: 'Created', description: `${displayName} attached` });
       }
@@ -287,6 +300,7 @@ export default function ToolsPage() {
     if (!confirm(`Delete "${name}"? This removes the tool from the catalog and all assistants.`)) return;
     try {
       await toolsApi.delete(id);
+      posthog.capture('tool_deleted', { tool_id: id, tool_name: name });
       toast({ title: 'Deleted', description: name });
       await refresh();
     } catch {

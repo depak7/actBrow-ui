@@ -8,6 +8,7 @@ import { BrandLogo } from '@/components/brand-logo';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { clearActiveAssistant, setStoredUser } from '@/lib/session';
+import posthog from 'posthog-js';
 
 declare global {
   interface Window {
@@ -34,6 +35,11 @@ export default function LoginPage() {
     (apiKey: string, user: Record<string, unknown>) => {
       clearActiveAssistant();
       setStoredUser({ ...user, apiKey });
+      const userId = String(user.id ?? user.email ?? '');
+      if (userId) {
+        posthog.identify(userId, { email: user.email as string | undefined });
+      }
+      posthog.capture('user_signed_in', { provider: 'google' });
       toast({ title: 'Signed in', description: 'Welcome back.' });
       router.push('/dashboard');
     },
@@ -51,6 +57,10 @@ export default function LoginPage() {
         });
         const data = await response.json();
         if (!response.ok || !data.success || !data.user?.id || !data.apiKey) {
+          posthog.capture('user_sign_in_failed', {
+            provider: 'google',
+            reason: data.error || 'authentication_failed',
+          });
           toast({
             title: 'Sign-in failed',
             description: data.error || 'Could not complete Google sign-in',
@@ -60,6 +70,7 @@ export default function LoginPage() {
         }
         finishLogin(data.apiKey, data.user);
       } catch {
+        posthog.capture('user_sign_in_failed', { provider: 'google', reason: 'network_error' });
         toast({ title: 'Sign-in failed', description: 'Network error', variant: 'destructive' });
       } finally {
         setLoading(false);

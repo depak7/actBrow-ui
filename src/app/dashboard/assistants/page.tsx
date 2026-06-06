@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from '@/components/ui/textarea';
 import { clearActiveAssistant, readStoredUserId, setActiveAssistant } from '@/lib/session';
+import posthog from 'posthog-js';
 
 export default function AssistantsPage() {
   const { toast } = useToast();
@@ -52,9 +53,14 @@ export default function AssistantsPage() {
       }
       const assistant = await assistantsApi.create({ ...newAssistant, userId });
       setActiveAssistant(assistant);
+      posthog.capture('assistant_created', {
+        assistant_id: assistant.id,
+        use_predefined_flows: newAssistant.usePredefinedFlows,
+        has_system_prompt: !!newAssistant.systemPrompt,
+      });
       toast({ title: 'Success', description: 'Assistant created successfully' });
-      setCreateDialogOpen(false); 
-      setNewAssistant({ name: '', systemPrompt: '', usePredefinedFlows: true }); 
+      setCreateDialogOpen(false);
+      setNewAssistant({ name: '', systemPrompt: '', usePredefinedFlows: true });
       fetchAssistants();
     } catch (error: any) { 
       toast({ title: 'Error', description: error.response?.data?.message || 'Failed to create assistant', variant: 'destructive' }); 
@@ -63,15 +69,16 @@ export default function AssistantsPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure?')) return;
-    try { 
-      await assistantsApi.delete(id); 
+    try {
+      await assistantsApi.delete(id);
       if (localStorage.getItem('actbrow_active_assistant_id') === id) {
         clearActiveAssistant();
       }
-      toast({ title: 'Success', description: 'Assistant deleted' }); 
-      fetchAssistants(); 
-    } catch (error) { 
-      toast({ title: 'Error', description: 'Failed to delete assistant', variant: 'destructive' }); 
+      posthog.capture('assistant_deleted', { assistant_id: id });
+      toast({ title: 'Success', description: 'Assistant deleted' });
+      fetchAssistants();
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to delete assistant', variant: 'destructive' });
     }
   };
 
@@ -99,6 +106,11 @@ export default function AssistantsPage() {
         systemPrompt: editingAssistant.systemPrompt || '',
         usePredefinedFlows: editingAssistant.usePredefinedFlows,
         userId,
+      });
+      posthog.capture('assistant_updated', {
+        assistant_id: editingAssistant.id,
+        use_predefined_flows: editingAssistant.usePredefinedFlows,
+        has_system_prompt: !!editingAssistant.systemPrompt,
       });
       toast({ title: 'Success', description: 'Assistant updated successfully' });
       setEditDialogOpen(false);
