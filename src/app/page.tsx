@@ -10,6 +10,7 @@ import { TrustSection } from '@/components/landing/trust-section';
 import { ProblemSection } from '@/components/landing/problem-section';
 import { SolutionSection } from '@/components/landing/solution-section';
 import { ProductDemo } from '@/components/landing/product-demo';
+import { DemoVideo } from '@/components/landing/demo-video';
 import { Features } from '@/components/landing/features';
 import { EnterpriseSection } from '@/components/landing/enterprise-section';
 import { Integrations } from '@/components/landing/integrations';
@@ -100,41 +101,7 @@ export default function LandingPage() {
 
             <div className="mx-auto max-w-5xl">
               <div className="card-sheen relative overflow-hidden rounded-2xl border border-white/10 bg-black/50 shadow-elevated">
-                {DEMO_VIDEO_EMBED_URL ? (
-                  <div className="relative aspect-video w-full">
-                    <iframe
-                      title="ActBrow product demo"
-                      src={DEMO_VIDEO_EMBED_URL}
-                      className="absolute inset-0 h-full w-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      allowFullScreen
-                    />
-                  </div>
-                ) : DEMO_VIDEO_FILE_URL ? (
-                  <video className="aspect-video w-full bg-black" controls playsInline preload="metadata">
-                    <source src={DEMO_VIDEO_FILE_URL} type="video/mp4" />
-                    Your browser does not support embedded video.
-                  </video>
-                ) : (
-                  <div className="flex aspect-video flex-col items-center justify-center gap-4 bg-gradient-to-b from-white/[0.06] to-white/[0.02] px-6 py-16">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white">
-                      <Play className="ml-1 h-8 w-8" fill="currentColor" />
-                    </div>
-                    <p className="text-lg font-medium text-white">Product demo video</p>
-                    <p className="max-w-md text-center text-sm text-neutral-500">
-                      Set{' '}
-                      <code className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-xs text-neutral-300">
-                        NEXT_PUBLIC_DEMO_VIDEO_EMBED_URL
-                      </code>{' '}
-                      (embed link) or{' '}
-                      <code className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-xs text-neutral-300">
-                        NEXT_PUBLIC_PRODUCT_DEMO_VIDEO_URL
-                      </code>{' '}
-                      (MP4 URL) in <span className="text-neutral-400">.env.local</span>, then restart
-                      the dev server.
-                    </p>
-                  </div>
-                )}
+                <DemoVideo embedUrl={DEMO_VIDEO_EMBED_URL} fileUrl={DEMO_VIDEO_FILE_URL} />
               </div>
             </div>
           </div>
