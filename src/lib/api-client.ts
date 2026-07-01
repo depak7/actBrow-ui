@@ -11,7 +11,8 @@ const api = axios.create({
 
 // Request interceptor to add the signed-in account API key.
 api.interceptors.request.use((config) => {
-  const apiKey = localStorage.getItem('actbrow_api_key');
+  // Guard localStorage: interceptors can run before window exists (SSR/prerender).
+  const apiKey = typeof window !== 'undefined' ? localStorage.getItem('actbrow_api_key') : null;
   if (apiKey) {
     config.headers.Authorization = `Bearer ${apiKey}`;
     config.headers['X-API-Key'] = apiKey;
@@ -19,11 +20,16 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// An invalid assistant key should not sign the dashboard user out.
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // A 401 means this account key is no longer valid — clear and bounce to login, but never
+    // when already on /login (avoids a redirect loop) or during SSR (no window).
+    if (
+      error.response?.status === 401 &&
+      typeof window !== 'undefined' &&
+      window.location.pathname !== '/login'
+    ) {
       clearSession();
       window.location.href = '/login';
     }

@@ -238,7 +238,7 @@ export default function DashboardLayout({
           </div>
         </aside>
 
-        <main className="flex-1">
+        <main className="flex-1 min-w-0">
           <header className="border-b border-white/10 px-6 py-4 flex items-center justify-between sticky top-0 z-40 bg-background/95 backdrop-blur">
             <h1 className="text-2xl font-semibold text-white capitalize">
               {pathname.split('/').pop()?.replace(/-/g, ' ')}

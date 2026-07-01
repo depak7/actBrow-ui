@@ -45,6 +45,7 @@ export default function IntegrationsPage() {
       }
     } catch {
       toast({ title: 'Error', description: 'Failed to load assistants', variant: 'destructive' });
+      setLoading(false);
     }
   };
 

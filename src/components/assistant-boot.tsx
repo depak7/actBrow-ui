@@ -25,6 +25,17 @@ export default function AssistantBoot() {
         localStorage.getItem("actbrow_api_key");
 
       if (!assistantId || !apiKey) {
+        // Logged out / key cleared: tear down any mounted widget so it doesn't linger on screen.
+        const w = window as any;
+        if (w.ActbrowWidget && typeof w.ActbrowWidget.destroy === 'function') {
+          try {
+            w.ActbrowWidget.destroy();
+          } catch {
+            /* ignore teardown errors */
+          }
+        }
+        w.ActbrowWidget = undefined;
+        w.ActbrowWidgetConfig = undefined;
         setReady(false);
         return;
       }

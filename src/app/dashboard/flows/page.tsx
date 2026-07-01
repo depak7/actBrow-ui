@@ -13,6 +13,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { readStoredUserId, setActiveAssistant } from '@/lib/session';
 
+// Stable per-step id so React keys survive removing a middle step (index keys mis-associate
+// the <select> value with the wrong row).
+let stepIdCounter = 0;
+const nextStepId = () => `step-${stepIdCounter++}`;
+
 export default function FlowsPage() {
   const { toast } = useToast();
   const [flows, setFlows] = useState<NavigationFlow[]>([]);
@@ -25,7 +30,7 @@ export default function FlowsPage() {
     name: '',
     triggerPhrase: '',
     enabled: true,
-    steps: [{ toolId: '' }],
+    steps: [{ id: nextStepId(), toolId: '' }],
   });
 
   const activateSelectedAssistant = () => {
@@ -87,7 +92,7 @@ export default function FlowsPage() {
       });
       toast({ title: 'Success', description: 'Created' });
       setCreateDialogOpen(false);
-      setNewFlow({ name: '', triggerPhrase: '', enabled: true, steps: [{ toolId: '' }] });
+      setNewFlow({ name: '', triggerPhrase: '', enabled: true, steps: [{ id: nextStepId(), toolId: '' }] });
       fetchFlows();
     }
     catch (error: unknown) {
@@ -112,7 +117,7 @@ export default function FlowsPage() {
     }
   };
 
-  const addStep = () => setNewFlow({ ...newFlow, steps: [...newFlow.steps, { toolId: '' }] });
+  const addStep = () => setNewFlow({ ...newFlow, steps: [...newFlow.steps, { id: nextStepId(), toolId: '' }] });
   const removeStep = (index: number) => setNewFlow({ ...newFlow, steps: newFlow.steps.filter((_, i) => i !== index) });
   const updateStep = (index: number, value: string) => {
     const newSteps = [...newFlow.steps];
@@ -151,7 +156,7 @@ export default function FlowsPage() {
                   </p>
                 ) : null}
                 {newFlow.steps.map((step, index) => (
-                  <div key={index} className="flex items-center gap-2 p-3 border border-white/10 rounded-lg bg-white/5">
+                  <div key={step.id} className="flex items-center gap-2 p-3 border border-white/10 rounded-lg bg-white/5">
                     <span className="text-sm font-medium text-neutral-400 shrink-0">{index + 1}.</span>
                     <select
                       value={step.toolId}

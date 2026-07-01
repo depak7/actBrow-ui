@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import posthog from 'posthog-js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,12 @@ export default function ConnectPage() {
   const [connect, setConnect] = useState<AssistantConnect | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  // Mirror assistants into a ref so loadConnect need not depend on it (avoids effect churn /
+  // duplicate fetches + analytics events every time the assistants list settles).
+  const assistantsRef = useRef<Assistant[]>([]);
+  useEffect(() => {
+    assistantsRef.current = assistants;
+  }, [assistants]);
 
   const loadAssistants = useCallback(async () => {
     const userId = readStoredUserId();
@@ -44,7 +50,7 @@ export default function ConnectPage() {
     }
     setRefreshing(true);
     try {
-      const assistant = assistants.find((a) => a.id === currentAssistantId);
+      const assistant = assistantsRef.current.find((a) => a.id === currentAssistantId);
       if (assistant) setActiveAssistant(assistant);
       const connectData = await connectApi.get(currentAssistantId);
       setConnect(connectData);
@@ -59,7 +65,7 @@ export default function ConnectPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [assistants, toast]);
+  }, [toast]);
 
   useEffect(() => {
     loadAssistants().catch(() => {
@@ -69,9 +75,9 @@ export default function ConnectPage() {
   }, [loadAssistants, toast]);
 
   useEffect(() => {
-    if (assistantId) {
-      loadConnect(assistantId);
-    }
+    // Call unconditionally: loadConnect('') clears the stale card and resolves loading when the
+    // user picks the empty "Select assistant…" option.
+    loadConnect(assistantId);
   }, [assistantId, loadConnect]);
 
   const syncSummaryText = connect?.lastSyncSummary

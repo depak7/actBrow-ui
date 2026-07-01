@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { assistantsApi } from '@/lib/api';
 import type { Assistant } from '@/types';
 import Link from 'next/link';
-import { Plus, Trash2, Copy, Check, Wrench, Pencil } from 'lucide-react';
+import { Plus, Trash2, Copy, Check, Wrench, Pencil, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from '@/components/ui/textarea';
@@ -24,6 +24,8 @@ export default function AssistantsPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [editingAssistant, setEditingAssistant] = useState<Assistant | null>(null);
   const [newAssistant, setNewAssistant] = useState({ name: '', systemPrompt: '', usePredefinedFlows: true });
+  const [creating, setCreating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchAssistants = async () => { 
     try { 
@@ -46,6 +48,12 @@ export default function AssistantsPage() {
   useEffect(() => { fetchAssistants(); }, []);
 
   const handleCreate = async () => {
+    if (creating) return;
+    if (!newAssistant.name.trim()) {
+      toast({ title: 'Error', description: 'Name is required', variant: 'destructive' });
+      return;
+    }
+    setCreating(true);
     try {
       const userId = readStoredUserId();
       if (!userId) {
@@ -62,13 +70,17 @@ export default function AssistantsPage() {
       setCreateDialogOpen(false);
       setNewAssistant({ name: '', systemPrompt: '', usePredefinedFlows: true });
       fetchAssistants();
-    } catch (error: any) { 
-      toast({ title: 'Error', description: error.response?.data?.message || 'Failed to create assistant', variant: 'destructive' }); 
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.response?.data?.message || error.response?.data?.error || 'Failed to create assistant', variant: 'destructive' });
+    } finally {
+      setCreating(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure?')) return;
+    if (deletingId) return;
+    if (!confirm('Are you sure? This permanently deletes the assistant and its tools, flows, knowledge, integrations and conversations.')) return;
+    setDeletingId(id);
     try {
       await assistantsApi.delete(id);
       if (localStorage.getItem('actbrow_active_assistant_id') === id) {
@@ -77,16 +89,23 @@ export default function AssistantsPage() {
       posthog.capture('assistant_deleted', { assistant_id: id });
       toast({ title: 'Success', description: 'Assistant deleted' });
       fetchAssistants();
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to delete assistant', variant: 'destructive' });
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.response?.data?.message || error.response?.data?.error || 'Failed to delete assistant', variant: 'destructive' });
+    } finally {
+      setDeletingId(null);
     }
   };
 
   const copyAssistantId = async (id: string) => {
-    await navigator.clipboard.writeText(id);
-    setCopiedId(id);
-    toast({ title: 'Copied!', description: 'Assistant ID copied to clipboard' });
-    setTimeout(() => setCopiedId(null), 2000);
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopiedId(id);
+      toast({ title: 'Copied!', description: 'Assistant ID copied to clipboard' });
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      // clipboard API is unavailable on insecure origins / older browsers
+      toast({ title: 'Copy failed', description: 'Select and copy the ID manually', variant: 'destructive' });
+    }
   };
 
   const openEditDialog = (assistant: Assistant) => {
@@ -124,7 +143,7 @@ export default function AssistantsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h2 className="text-3xl font-semibold text-white">Assistants</h2><p className="text-neutral-400">Manage your AI assistants</p></div>
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <Dialog open={createDialogOpen} onOpenChange={(open) => { if (!creating) setCreateDialogOpen(open); }}>
           <DialogTrigger asChild><Button className="bg-white text-neutral-900 hover:bg-white/90"><Plus className="h-4 w-4 mr-2" />Create Assistant</Button></DialogTrigger>
           <DialogContent className="border-white/10 bg-neutral-900">
             <DialogHeader><DialogTitle className="text-white">Create Assistant</DialogTitle><DialogDescription className="text-neutral-400">Configure your AI assistant</DialogDescription></DialogHeader>
@@ -133,7 +152,7 @@ export default function AssistantsPage() {
               <div className="grid gap-2"><label className="text-sm font-medium text-white">System Prompt</label><textarea value={newAssistant.systemPrompt} onChange={(e) => setNewAssistant({ ...newAssistant, systemPrompt: e.target.value })} className="flex min-h-[80px] rounded-md border border-white/10 bg-white/5 text-white px-3" /></div>
               <div className="flex items-center gap-2"><input type="checkbox" id="usePredefinedFlows" checked={newAssistant.usePredefinedFlows} onChange={(e) => setNewAssistant({ ...newAssistant, usePredefinedFlows: e.target.checked })} className="h-4 w-4" /><label htmlFor="usePredefinedFlows" className="text-sm font-medium text-white">Use Predefined Flows</label></div>
             </div>
-            <DialogFooter><Button variant="outline" onClick={() => setCreateDialogOpen(false)} className="border-white/10 text-neutral-300">Cancel</Button><Button onClick={handleCreate} className="bg-white text-neutral-900 hover:bg-white/90">Create</Button></DialogFooter>
+            <DialogFooter><Button variant="outline" onClick={() => setCreateDialogOpen(false)} disabled={creating} className="border-white/10 text-neutral-300">Cancel</Button><Button onClick={handleCreate} disabled={creating} className="bg-white text-neutral-900 hover:bg-white/90">{creating ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" />Creating...</>) : 'Create'}</Button></DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
@@ -172,8 +191,8 @@ export default function AssistantsPage() {
                         <Button variant="ghost" size="icon" onClick={() => openEditDialog(assistant)} className="text-neutral-400 hover:text-white h-8 w-8">
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(assistant.id)} className="text-red-400 hover:text-red-300 h-8 w-8">
-                          <Trash2 className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(assistant.id)} disabled={deletingId === assistant.id} className="text-red-400 hover:text-red-300 h-8 w-8">
+                          {deletingId === assistant.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                         </Button>
                       </div>
                     </TableCell>
