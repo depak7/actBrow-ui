@@ -145,7 +145,7 @@ export function EnterpriseSection() {
         {/* CTA row */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button asChild size="lg" className="min-w-[160px]">
-            <Link href="/waitlist">Book a demo</Link>
+            <Link href="/book-a-demo">Book a demo</Link>
           </Button>
           <a
             href="mailto:deepakfordev@gmail.com"

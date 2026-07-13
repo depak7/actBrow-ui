@@ -4,6 +4,8 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import AssistantBoot from "@/components/assistant-boot";
 import { PostHogProvider } from "./posthog-provider";
+import { Analytics } from "@vercel/analytics/next";
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_TAGLINE, GITHUB_URL, absoluteUrl } from "@/lib/site";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -18,9 +20,75 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ActBrow — The AI agent that lives inside your product",
-  description:
-    "Drop in two script tags and ship an AI agent that navigates your app, calls your APIs, runs flows, and answers from your docs — inside your own product. Configured by your coding agent, not weeks of glue code.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    template: `%s — ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: [
+    "in-app AI agent runtime",
+    "embed AI agent in React app",
+    "embed AI agent in Vue app",
+    "AI agent that navigates your app",
+    "two script tag AI assistant",
+    "self-hosted AI agent",
+    "REST tool execution",
+  ],
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    description: SITE_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    description: SITE_DESCRIPTION,
+  },
+};
+
+// Site-wide structured data. SoftwareApplication + Organization feed AI Overviews and
+// ChatGPT/Perplexity-style citations with the verbatim facts we want quoted (two-script
+// embed, no backend rewrite, Docker self-host).
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": absoluteUrl("/#organization"),
+      name: SITE_NAME,
+      url: SITE_URL,
+      description: SITE_DESCRIPTION,
+      sameAs: [GITHUB_URL],
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": absoluteUrl("/#software"),
+      name: SITE_NAME,
+      applicationCategory: "DeveloperApplication",
+      operatingSystem: "Web, Docker (self-hosted)",
+      url: SITE_URL,
+      description: SITE_DESCRIPTION,
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+        description: "Open-source, self-hostable with Docker.",
+      },
+      featureList: [
+        "Embed with two script tags — no backend rewrite",
+        "AI agent navigates your app and calls your APIs",
+        "REST tool execution",
+        "Answers from your own docs",
+        "Self-host with Docker",
+      ],
+      publisher: { "@id": absoluteUrl("/#organization") },
+    },
+  ],
 };
 
 export default function RootLayout({
@@ -30,12 +98,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+      </head>
       <body className="antialiased font-sans">
         <PostHogProvider>
           <AssistantBoot />
           {children}
           <Toaster />
         </PostHogProvider>
+        <Analytics />
       </body>
     </html>
   );

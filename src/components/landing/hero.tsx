@@ -85,7 +85,7 @@ export function Hero() {
               size="lg"
               className="bg-white font-medium text-neutral-900 hover:bg-white/90"
             >
-              <Link href="/waitlist" className="flex items-center gap-2">
+              <Link href="/book-a-demo" className="flex items-center gap-2">
                 Book a demo
                 <ArrowRight className="h-4 w-4" />
               </Link>

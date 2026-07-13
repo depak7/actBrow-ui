@@ -1,6 +1,14 @@
 import Link from 'next/link';
 import { Github, Twitter } from 'lucide-react';
 import { BrandLogo } from '@/components/brand-logo';
+import { GITHUB_URL } from '@/lib/site';
+
+const DEVELOPER_LINKS = [
+  { label: 'Docs', href: '/docs' },
+  { label: 'React example', href: '/examples/react' },
+  { label: 'Vue example', href: '/examples/vue' },
+  { label: 'Self-hosting', href: '/self-hosting' },
+] as const;
 
 const PRODUCT_LINKS = [
   { label: 'Overview', href: '#product' },
@@ -11,14 +19,14 @@ const PRODUCT_LINKS = [
 
 const COMPANY_LINKS = [
   { label: 'Product tour', href: '#product' },
-  { label: 'Book a demo', href: '/waitlist' },
+  { label: 'Book a demo', href: '/book-a-demo' },
   { label: 'Sign in', href: '/login' },
 ] as const;
 
 const CONNECT_LINKS = [
   { label: 'deepakfordev@gmail.com', href: 'mailto:deepakfordev@gmail.com' },
   { label: '@depak_7 on X', href: 'https://x.com/depak_7' },
-  { label: 'GitHub', href: 'https://github.com' },
+  { label: 'GitHub', href: GITHUB_URL },
 ] as const;
 
 function FooterColumn({
@@ -43,7 +51,7 @@ export function LandingFooter() {
     <footer className="border-t border-white/10">
       <div className="mx-auto max-w-7xl px-4 md:px-6 py-16">
         {/* Main grid */}
-        <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-6">
           {/* Brand column — spans 2 on large */}
           <div className="flex flex-col gap-5 lg:col-span-2">
             <Link href="/" className="inline-flex">
@@ -65,6 +73,20 @@ export function LandingFooter() {
                 >
                   {label}
                 </a>
+              </li>
+            ))}
+          </FooterColumn>
+
+          {/* Developers */}
+          <FooterColumn heading="Developers">
+            {DEVELOPER_LINKS.map(({ label, href }) => (
+              <li key={href}>
+                <Link
+                  href={href}
+                  className="text-sm text-neutral-400 hover:text-white transition-colors"
+                >
+                  {label}
+                </Link>
               </li>
             ))}
           </FooterColumn>
@@ -128,7 +150,7 @@ export function LandingFooter() {
 
             <div className="flex items-center gap-3 ml-2">
               <a
-                href="https://github.com"
+                href={GITHUB_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="GitHub"

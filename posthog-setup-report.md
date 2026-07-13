@@ -7,6 +7,7 @@ The wizard has completed a deep integration of PostHog analytics into the ActBro
 
 | Event | Description | File |
 |-------|-------------|------|
+| `waitlist_page_viewed` | User visits the waitlist signup page | `src/app/waitlist/page.tsx` |
 | `waitlist_form_submitted` | User successfully submits the waitlist signup form | `src/app/waitlist/page.tsx` |
 | `user_signed_in` | User successfully signs in with Google OAuth | `src/app/login/page.tsx` |
 | `user_sign_in_failed` | User attempted to sign in but authentication failed | `src/app/login/page.tsx` |

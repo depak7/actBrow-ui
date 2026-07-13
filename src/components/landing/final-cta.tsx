@@ -70,7 +70,7 @@ export function FinalCta() {
                 size="lg"
                 className="bg-white text-neutral-900 hover:bg-white/90 font-medium"
               >
-                <Link href="/waitlist">
+                <Link href="/book-a-demo">
                   Book a demo
                   <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                 </Link>

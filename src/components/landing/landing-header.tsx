@@ -5,10 +5,12 @@ import Link from 'next/link';
 import { Github, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BrandLogo } from '@/components/brand-logo';
+import { GITHUB_URL } from '@/lib/site';
 
 const NAV_LINKS = [
   { label: 'Product', href: '#product' },
   { label: 'Features', href: '#features' },
+  { label: 'Docs', href: '/docs' },
   { label: 'Integrations', href: '#integrations' },
   { label: 'Enterprise', href: '#enterprise' },
 ] as const;
@@ -41,7 +43,7 @@ export function LandingHeader() {
           {/* Right — Desktop actions */}
           <div className="hidden md:flex items-center gap-4">
             <a
-              href="https://github.com"
+              href={GITHUB_URL}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="GitHub"
@@ -62,7 +64,7 @@ export function LandingHeader() {
               className="bg-white text-neutral-900 hover:bg-white/90 font-medium"
               size="sm"
             >
-              <Link href="/waitlist">Book a demo</Link>
+              <Link href="/book-a-demo">Book a demo</Link>
             </Button>
           </div>
 
@@ -105,7 +107,7 @@ export function LandingHeader() {
                 asChild
                 className="bg-white text-neutral-900 hover:bg-white/90 font-medium w-full"
               >
-                <Link href="/waitlist" onClick={() => setMobileOpen(false)}>
+                <Link href="/book-a-demo" onClick={() => setMobileOpen(false)}>
                   Book a demo
                 </Link>
               </Button>
