@@ -12,6 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/examples/react', priority: 0.8, changeFrequency: 'monthly' },
     { path: '/examples/vue', priority: 0.8, changeFrequency: 'monthly' },
     { path: '/self-hosting', priority: 0.8, changeFrequency: 'monthly' },
+    { path: '/pricing', priority: 0.7, changeFrequency: 'monthly' },
     { path: '/book-a-demo', priority: 0.6, changeFrequency: 'monthly' },
   ];
 

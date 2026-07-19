@@ -11,14 +11,16 @@ const DEVELOPER_LINKS = [
 ] as const;
 
 const PRODUCT_LINKS = [
-  { label: 'Overview', href: '#product' },
-  { label: 'Features', href: '#features' },
-  { label: 'Integrations', href: '#integrations' },
-  { label: 'Enterprise', href: '#enterprise' },
+  { label: 'Overview', href: '/#product' },
+  { label: 'Features', href: '/#features' },
+  { label: 'Pricing', href: '/pricing' },
+  { label: 'Integrations', href: '/#integrations' },
+  { label: 'Enterprise', href: '/#enterprise' },
 ] as const;
 
 const COMPANY_LINKS = [
-  { label: 'Product tour', href: '#product' },
+  { label: 'Product tour', href: '/#product' },
+  { label: 'Pricing', href: '/pricing' },
   { label: 'Book a demo', href: '/book-a-demo' },
   { label: 'Sign in', href: '/login' },
 ] as const;
