@@ -50,17 +50,15 @@ export function FinalCta() {
 
             {/* Headline */}
             <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white max-w-3xl mx-auto leading-[1.1]">
-              Stop shipping help articles.
+              Put a finishing assistant
               <br />
-              <span className="text-gradient-accent">
-                Ship an agent that does the work.
-              </span>
+              <span className="text-gradient-accent">in your product today.</span>
             </h2>
 
             {/* Subhead */}
             <p className="text-lg text-neutral-400 max-w-2xl mx-auto leading-relaxed">
-              Create an assistant, let your coding agent sync the tools, and embed the widget.
-              Your users get an agent that acts — in an afternoon.
+              Two script tags. Users ask. ActBrow navigates and acts. Book a demo
+              or start building.
             </p>
 
             {/* CTA buttons */}

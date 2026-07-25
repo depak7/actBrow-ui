@@ -55,27 +55,24 @@ export function Hero() {
         <div className="mx-auto max-w-4xl text-center">
           {/* Eyebrow */}
           <div className="animate-fade-in-up mb-6 inline-flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold tracking-widest text-emerald-400 uppercase">
-              New
-            </span>
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium tracking-wide text-neutral-300">
               <Boxes className="h-3.5 w-3.5 text-emerald-400" />
-              Embedded AI agent infrastructure
+              Embed in any web app · Two script tags
             </span>
           </div>
 
-          {/* H1 */}
+          {/* H1 — must pass a 5-second test: what is this? */}
           <h1 className="animate-fade-in-up animate-fade-in-up-delay-1 text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
-            <span className="text-gradient">The AI agent that lives</span>
+            <span className="text-gradient">Chat that finishes the work</span>
             <br />
             <span className="text-gradient-accent">inside your product.</span>
           </h1>
 
-          {/* Subhead */}
+          {/* Subhead — who + how + vs status quo, one breath */}
           <p className="animate-fade-in-up animate-fade-in-up-delay-2 mx-auto mt-6 max-w-xl text-base leading-relaxed text-neutral-400 md:text-lg">
-            Two script tags. One agent that navigates your app, calls your APIs,
-            and answers from your docs — so users finish the job without leaving
-            the page. Wired up by your coding agent, live in an afternoon.
+            Users ask in plain English. ActBrow opens the right screen, calls
+            your APIs, and completes the task — so they never open a ticket.
+            Unlike Intercom or Zendesk, it acts inside your app.
           </p>
 
           {/* CTAs */}

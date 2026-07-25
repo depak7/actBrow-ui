@@ -121,7 +121,7 @@ export default function BookADemoPage() {
               Book a demo
             </h1>
             <p className="text-xl text-neutral-400 leading-relaxed">
-              See ActBrow running inside a real app. Tell me a bit about your product and I'll reach out to you personally to set up a walkthrough.
+              See chat that finishes work inside a real app — navigate, call APIs, done. Tell me about your product and I&apos;ll reach out personally to set up a walkthrough.
             </p>
           </div>
 
@@ -131,8 +131,8 @@ export default function BookADemoPage() {
                 <MessagesSquare className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-white mb-1">A personal walkthrough</h3>
-                <p className="text-neutral-400 text-sm">I'll reach out in person and show you ActBrow live — not a canned recording.</p>
+                <h3 className="text-lg font-semibold text-white mb-1">See it finish a task</h3>
+                <p className="text-neutral-400 text-sm">I&apos;ll reach out in person and show ActBrow navigate and act live — not a canned recording.</p>
               </div>
             </div>
 
@@ -215,7 +215,7 @@ export default function BookADemoPage() {
                   id="useCase"
                   value={formData.useCase}
                   onChange={(e) => setFormData({ ...formData, useCase: e.target.value })}
-                  placeholder="Tell me about your product and what you'd want ActBrow to do..."
+                  placeholder="e.g. onboarding help inside our SaaS, or replace Intercom for in-app how-do-I questions..."
                   className="flex min-h-[100px] w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-neutral-500 focus:border-white focus:outline-none focus:ring-1 focus:ring-white/20"
                 />
               </div>

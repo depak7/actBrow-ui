@@ -6,14 +6,8 @@ import { CodePanel } from '@/components/code-panel';
 
 import { LandingHeader } from '@/components/landing/landing-header';
 import { Hero } from '@/components/landing/hero';
-import { TrustSection } from '@/components/landing/trust-section';
-import { ProblemSection } from '@/components/landing/problem-section';
-import { SolutionSection } from '@/components/landing/solution-section';
 import { ProductDemo } from '@/components/landing/product-demo';
 import { DemoVideo } from '@/components/landing/demo-video';
-import { Features } from '@/components/landing/features';
-import { EnterpriseSection } from '@/components/landing/enterprise-section';
-import { Integrations } from '@/components/landing/integrations';
 import { FinalCta } from '@/components/landing/final-cta';
 import { LandingFooter } from '@/components/landing/landing-footer';
 
@@ -48,23 +42,23 @@ const SETUP_STEPS: { title: string; body: React.ReactNode }[] = [
     ),
   },
   {
-    title: 'Let your coding agent sync it',
+    title: 'Sync tools from your coding agent',
     body: (
       <>
-        Paste the setup prompt into Claude Code or Codex — it pushes tools and knowledge
-        through the typed sync API.
+        Paste the setup prompt into Claude Code or Codex — it pushes tools and
+        knowledge through the sync API.
       </>
     ),
   },
   {
-    title: 'Drop in two script tags',
+    title: 'Paste two script tags',
     body: (
       <>
-        Add the embed snippet before{' '}
+        Drop the embed before{' '}
         <code className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-xs text-neutral-300">
           &lt;/body&gt;
         </code>{' '}
-        and the agent goes live.
+        — the chat goes live.
       </>
     ),
   },
@@ -76,26 +70,26 @@ export default function LandingPage() {
       <LandingHeader />
 
       <main>
+        {/* 1. What is it + proof visual */}
         <Hero />
-        <TrustSection />
-        <ProblemSection />
-        <SolutionSection />
+
+        {/* 2. See it work (interactive) */}
         <ProductDemo />
 
-        {/* Product demo video (env-driven) */}
+        {/* 3. Watch it run (optional video) */}
         <section id="demo" className="border-t border-white/10">
           <div className="mx-auto max-w-7xl px-4 md:px-6 py-20 md:py-28">
             <div className="mx-auto max-w-2xl text-center space-y-4 mb-12">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-neutral-400">
                 <Play className="h-3.5 w-3.5 text-brand-3" />
-                Watch it run
+                30-second walkthrough
               </div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">
-                Two minutes, end to end
+                Watch a user finish a task without clicking
               </h2>
               <p className="text-lg leading-relaxed text-neutral-400">
-                Create an assistant, sync tools with your coding agent, embed the widget, and
-                watch the agent act inside a real app.
+                One ask in chat → navigate → API call → done. Same flow you embed
+                in your own app.
               </p>
             </div>
 
@@ -107,23 +101,21 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <Features />
-
-        {/* Integrate with a script (embed snippet) */}
+        {/* 4. How to add it */}
         <section id="integrate" className="border-t border-white/10">
           <div className="mx-auto max-w-7xl px-4 md:px-6 py-20 md:py-28">
             <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
               <div className="space-y-7">
                 <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-neutral-400">
                   <Terminal className="h-3.5 w-3.5 text-brand-3" />
-                  Built for developers
+                  Setup
                 </div>
                 <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-white">
-                  Integrate with a script, not a sprint
+                  Live in your app in an afternoon
                 </h2>
                 <p className="text-lg leading-relaxed text-neutral-400">
-                  No SDK gymnastics, no backend rewrite. Sign up, let your coding agent push config
-                  through the sync API, then paste the embed snippet into your app.
+                  No platform migration. No backend rewrite. Three steps, then
+                  users chat and ActBrow does the click-work.
                 </p>
 
                 <ol className="space-y-5">
@@ -134,7 +126,9 @@ export default function LandingPage() {
                       </span>
                       <div>
                         <p className="font-medium text-white">{step.title}</p>
-                        <p className="mt-0.5 text-sm leading-relaxed text-neutral-400">{step.body}</p>
+                        <p className="mt-0.5 text-sm leading-relaxed text-neutral-400">
+                          {step.body}
+                        </p>
                       </div>
                     </li>
                   ))}
@@ -183,8 +177,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <EnterpriseSection />
-        <Integrations />
         <FinalCta />
       </main>
 

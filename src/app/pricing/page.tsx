@@ -10,7 +10,7 @@ import { absoluteUrl, GITHUB_URL } from '@/lib/site';
 export const metadata: Metadata = {
   title: 'Pricing — ActBrow early access',
   description:
-    'ActBrow is free during early access. Embed an in-app AI agent with two script tags, self-host with Docker, or book a demo for a founding production plan.',
+    'ActBrow is free during early access. Embed chat that finishes work inside your product — two script tags, self-host with Docker, or book a demo for a founding production plan.',
   alternates: { canonical: '/pricing' },
   openGraph: {
     title: 'Pricing — ActBrow early access',
@@ -21,9 +21,9 @@ export const metadata: Metadata = {
 };
 
 const EARLY_ACCESS_INCLUDES = [
-  'Hosted ActBrow dashboard and assistant runtime',
+  'Hosted dashboard and in-product chat runtime',
   'Two-script embed (SDK + widget)',
-  'Tools, knowledge, flows, and navigation',
+  'Navigate screens, call APIs, run flows, answer from docs',
   'React & Vue examples in the docs',
   'Self-host with Docker when you want the stack on your infra',
 ] as const;
@@ -51,9 +51,9 @@ export default function PricingPage() {
                 Free while we find the right plan with you
               </h1>
               <p className="text-lg leading-relaxed text-neutral-400">
-                ActBrow is in early access — no published tiers yet. Use it free to ship an in-app
-                agent, self-host if you prefer, and talk to us when you want a production
-                partnership.
+                ActBrow is in early access — no published tiers yet. Use it free to embed
+                chat that finishes work in your product, self-host if you prefer, and talk
+                to us when you want a production partnership.
               </p>
             </div>
 

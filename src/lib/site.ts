@@ -14,10 +14,10 @@ export const GITHUB_URL = (
 export const SITE_NAME = 'ActBrow';
 
 export const SITE_TAGLINE =
-  'Embed an AI agent that navigates your app — two script tags';
+  'Chat that finishes the work inside your product';
 
 export const SITE_DESCRIPTION =
-  'Drop in two script tags and ship an AI agent that navigates your app, calls your APIs, runs flows, and answers from your docs — inside your own product. No backend rewrite. Self-host with Docker.';
+  'Embed ActBrow in two script tags. Users ask in plain English — it navigates your app, calls your APIs, and finishes the task. Unlike Intercom or Zendesk, it acts inside your product. Self-host with Docker.';
 
 /** Absolute URL for a site-relative path (leading slash optional). */
 export function absoluteUrl(path = '/'): string {

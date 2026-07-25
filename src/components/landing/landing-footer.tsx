@@ -11,17 +11,15 @@ const DEVELOPER_LINKS = [
 ] as const;
 
 const PRODUCT_LINKS = [
-  { label: 'Overview', href: '/#product' },
-  { label: 'Features', href: '/#features' },
+  { label: 'See it work', href: '/#product' },
+  { label: 'Setup', href: '/#integrate' },
+  { label: 'Watch demo', href: '/#demo' },
   { label: 'Pricing', href: '/pricing' },
-  { label: 'Integrations', href: '/#integrations' },
-  { label: 'Enterprise', href: '/#enterprise' },
 ] as const;
 
 const COMPANY_LINKS = [
-  { label: 'Product tour', href: '/#product' },
-  { label: 'Pricing', href: '/pricing' },
   { label: 'Book a demo', href: '/book-a-demo' },
+  { label: 'Pricing', href: '/pricing' },
   { label: 'Sign in', href: '/login' },
 ] as const;
 
@@ -60,7 +58,8 @@ export function LandingFooter() {
               <BrandLogo />
             </Link>
             <p className="max-w-xs text-sm leading-relaxed text-neutral-400">
-              An AI agent that lives inside your product.
+              Chat that finishes the work inside your product — navigates,
+              calls APIs, done.
             </p>
             <p className="text-xs text-neutral-600">© ActBrow</p>
           </div>
@@ -144,10 +143,10 @@ export function LandingFooter() {
               Terms
             </a>
             <a
-              href="#enterprise"
+              href="/self-hosting"
               className="text-xs text-neutral-500 hover:text-white transition-colors"
             >
-              Security
+              Self-hosting
             </a>
 
             <div className="flex items-center gap-3 ml-2">

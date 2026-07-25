@@ -384,16 +384,15 @@ export function ProductDemo() {
           {/* Eyebrow */}
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-neutral-400">
             <MessageSquare className="h-3.5 w-3.5 text-emerald-400" />
-            Product tour
+            See it work
           </div>
 
           <h2 className="text-3xl font-bold tracking-tight text-white md:text-5xl">
-            See the agent work —{' '}
-            <span className="text-gradient-accent">right in the chat</span>
+            One ask. Navigate. Done.
           </h2>
           <p className="mt-4 max-w-2xl text-lg text-neutral-400">
-            ActBrow loads as a chat widget on your site. Open it and ask — it navigates, calls
-            your APIs, runs flows, and answers from your docs. Click through what that looks like.
+            This is the widget your users get. Click a tab to see navigating,
+            calling an API, running a flow, or answering from docs.
           </p>
         </div>
 

@@ -8,12 +8,10 @@ import { BrandLogo } from '@/components/brand-logo';
 import { GITHUB_URL } from '@/lib/site';
 
 const NAV_LINKS = [
-  { label: 'Product', href: '/#product' },
-  { label: 'Features', href: '/#features' },
+  { label: 'See it', href: '/#product' },
+  { label: 'Setup', href: '/#integrate' },
   { label: 'Docs', href: '/docs' },
   { label: 'Pricing', href: '/pricing' },
-  { label: 'Integrations', href: '/#integrations' },
-  { label: 'Enterprise', href: '/#enterprise' },
 ] as const;
 
 export function LandingHeader() {
