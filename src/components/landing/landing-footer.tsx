@@ -12,7 +12,7 @@ const DEVELOPER_LINKS = [
 
 const PRODUCT_LINKS = [
   { label: 'See it work', href: '/#product' },
-  { label: 'Setup', href: '/#integrate' },
+  { label: 'Get it running', href: '/#integrate' },
   { label: 'Watch demo', href: '/#demo' },
   { label: 'Pricing', href: '/pricing' },
 ] as const;

@@ -33,37 +33,37 @@ window.ActbrowWidgetConfig = {
 
 const SETUP_STEPS: { title: string; body: React.ReactNode }[] = [
   {
-    title: 'Create an assistant',
+    title: 'Add an assistant',
     body: (
       <>
-        Spin one up in the dashboard and open{' '}
-        <strong className="font-medium text-white">Connect</strong>.
+        Create one in the dashboard, then open{' '}
+        <strong className="font-medium text-white">Connect</strong> for the
+        setup prompt.
       </>
     ),
   },
   {
-    title: 'Sync tools from your coding agent',
+    title: 'Let your coding agent wire it up',
     body: (
       <>
-        Paste the setup prompt into Claude Code or Codex — it pushes tools and
-        knowledge through the sync API.
+        Drop the prompt into Claude Code or Codex. It syncs tools and docs over
+        the API so you don&apos;t configure by hand.
       </>
     ),
   },
   {
-    title: 'Paste two script tags',
+    title: 'Embed with two scripts',
     body: (
       <>
-        Drop the embed before{' '}
+        Paste the snippet before{' '}
         <code className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-xs text-neutral-300">
           &lt;/body&gt;
         </code>{' '}
-        — the chat goes live.
+        and the widget is live on your site.
       </>
     ),
   },
 ];
-
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-dark">
@@ -108,14 +108,14 @@ export default function LandingPage() {
               <div className="space-y-7">
                 <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-neutral-400">
                   <Terminal className="h-3.5 w-3.5 text-brand-3" />
-                  Setup
+                  Get it running
                 </div>
                 <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-white">
-                  Live in your app in an afternoon
+                  From zero to in-app chat by end of day
                 </h2>
                 <p className="text-lg leading-relaxed text-neutral-400">
-                  No platform migration. No backend rewrite. Three steps, then
-                  users chat and ActBrow does the click-work.
+                  Keep your stack as-is. Skip the rewrite. Follow three steps —
+                  then people ask in chat and ActBrow handles the clicking.
                 </p>
 
                 <ol className="space-y-5">

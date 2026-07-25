@@ -9,7 +9,7 @@ import { GITHUB_URL } from '@/lib/site';
 
 const NAV_LINKS = [
   { label: 'See it', href: '/#product' },
-  { label: 'Setup', href: '/#integrate' },
+  { label: 'Get it running', href: '/#integrate' },
   { label: 'Docs', href: '/docs' },
   { label: 'Pricing', href: '/pricing' },
 ] as const;
