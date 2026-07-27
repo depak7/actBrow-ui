@@ -83,8 +83,8 @@ export function Hero() {
               size="lg"
               className="bg-white font-medium text-neutral-900 hover:bg-white/90"
             >
-              <Link href="/book-a-demo" className="flex items-center gap-2">
-                Book a demo
+              <Link href="/login" className="flex items-center gap-2">
+                Start free
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -100,6 +100,12 @@ export function Hero() {
               </Link>
             </Button>
           </div>
+          <p className="animate-fade-in-up animate-fade-in-up-delay-2 mt-4 text-sm text-neutral-500">
+            Prefer a walkthrough?{' '}
+            <Link href="/book-a-demo" className="text-neutral-300 underline underline-offset-2 hover:text-white">
+              Book a demo
+            </Link>
+          </p>
 
           {/* Trust microcopy */}
           <p className="animate-fade-in-up animate-fade-in-up-delay-3 mt-5 text-xs text-neutral-500">

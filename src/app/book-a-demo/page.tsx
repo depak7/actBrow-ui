@@ -11,6 +11,15 @@ import { API_BASE_URL } from '@/types';
 import { CheckCircle2, ArrowLeft, MessagesSquare, Boxes, CalendarClock } from 'lucide-react';
 import posthog from 'posthog-js';
 
+function apiErrorMessage(payload: unknown, fallback: string): string {
+  if (payload && typeof payload === 'object') {
+    const record = payload as Record<string, unknown>;
+    if (typeof record.error === 'string' && record.error.trim()) return record.error;
+    if (typeof record.message === 'string' && record.message.trim()) return record.message;
+  }
+  return fallback;
+}
+
 export default function BookADemoPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -21,6 +30,7 @@ export default function BookADemoPage() {
   });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     posthog.capture('book_demo_page_viewed');
@@ -29,6 +39,7 @@ export default function BookADemoPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setFormError(null);
 
     try {
       const response = await fetch(`${API_BASE_URL}/v1/waitlist`, {
@@ -39,18 +50,26 @@ export default function BookADemoPage() {
         body: JSON.stringify(formData),
       });
 
+      const payload = (await response.json().catch(() => null)) as
+        | { alreadyRegistered?: boolean; error?: string; message?: string }
+        | null;
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to book a demo');
+        throw new Error(apiErrorMessage(payload, 'Failed to book a demo'));
       }
 
       posthog.capture('book_demo_form_submitted', {
         has_company: !!formData.company,
         has_use_case: !!formData.useCase,
+        already_registered: Boolean(payload?.alreadyRegistered),
       });
       setSubmitted(true);
-    } catch (error: any) {
-      alert(error.message || 'Failed to book a demo. Please try again.');
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'Something went wrong. Please try again, or email deepakfordev@gmail.com.';
+      setFormError(message);
     } finally {
       setLoading(false);
     }
@@ -67,20 +86,20 @@ export default function BookADemoPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <CardTitle className="text-2xl font-semibold text-white">Thanks — I'll be in touch</CardTitle>
+              <CardTitle className="text-2xl font-semibold text-white">Thanks — I&apos;ll be in touch</CardTitle>
               <CardDescription className="text-neutral-400">
-                I'll reach out to you personally to set up your ActBrow walkthrough
+                I&apos;ll reach out to you personally to set up your ActBrow walkthrough
               </CardDescription>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
             <p className="text-center text-neutral-400">
-              I'll email{' '}
+              I&apos;ll email{' '}
               <span className="text-white font-medium">{formData.email}</span>{' '}
               to find a time that works for you.
             </p>
             <div className="p-4 rounded-lg border border-white/10 bg-white/5">
-              <p className="text-sm text-neutral-400 mb-2">What's next?</p>
+              <p className="text-sm text-neutral-400 mb-2">What&apos;s next?</p>
               <ul className="space-y-2 text-sm text-neutral-300">
                 <li className="flex items-center gap-2">
                   <div className="h-1 w-1 rounded-full bg-white" />
@@ -96,12 +115,21 @@ export default function BookADemoPage() {
                 </li>
               </ul>
             </div>
-            <Button
-              className="w-full bg-white text-neutral-900 hover:bg-white/90"
-              onClick={() => router.push('/')}
-            >
-              Back to Home
-            </Button>
+            <div className="flex flex-col gap-3">
+              <Button
+                className="w-full bg-white text-neutral-900 hover:bg-white/90"
+                onClick={() => router.push('/login')}
+              >
+                Or start free now
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full border-white/15 bg-transparent text-white hover:bg-white/10"
+                onClick={() => router.push('/')}
+              >
+                Back to Home
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -123,6 +151,12 @@ export default function BookADemoPage() {
             <p className="text-xl text-neutral-400 leading-relaxed">
               See chat that finishes work inside a real app — navigate, call APIs, done. Tell me about your product and I&apos;ll reach out personally to set up a walkthrough.
             </p>
+            <p className="text-sm text-neutral-500">
+              Want to try yourself first?{' '}
+              <Link href="/login" className="text-neutral-300 underline underline-offset-2 hover:text-white">
+                Start free with Google
+              </Link>
+            </p>
           </div>
 
           <div className="space-y-6">
@@ -142,7 +176,7 @@ export default function BookADemoPage() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-white mb-1">See it in your stack</h3>
-                <p className="text-neutral-400 text-sm">We'll talk through how the two-script embed drops into your own product.</p>
+                <p className="text-neutral-400 text-sm">We&apos;ll talk through how the two-script embed drops into your own product.</p>
               </div>
             </div>
 
@@ -167,7 +201,7 @@ export default function BookADemoPage() {
             <div className="space-y-2">
               <CardTitle className="text-2xl font-semibold text-white">Book a demo</CardTitle>
               <CardDescription className="text-neutral-400">
-                Leave your details and I'll reach out to you personally
+                Leave your details and I&apos;ll reach out to you personally
               </CardDescription>
             </div>
           </CardHeader>
@@ -219,6 +253,15 @@ export default function BookADemoPage() {
                   className="flex min-h-[100px] w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-neutral-500 focus:border-white focus:outline-none focus:ring-1 focus:ring-white/20"
                 />
               </div>
+
+              {formError && (
+                <div
+                  role="alert"
+                  className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2.5 text-sm text-red-200"
+                >
+                  {formError}
+                </div>
+              )}
 
               <Button
                 type="submit"

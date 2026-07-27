@@ -52,10 +52,10 @@ export function LandingHeader() {
             </a>
 
             <Link
-              href="/login"
+              href="/book-a-demo"
               className="text-sm text-neutral-300 hover:text-white transition-colors"
             >
-              Sign in
+              Book a demo
             </Link>
 
             <Button
@@ -63,7 +63,7 @@ export function LandingHeader() {
               className="bg-white text-neutral-900 hover:bg-white/90 font-medium"
               size="sm"
             >
-              <Link href="/book-a-demo">Book a demo</Link>
+              <Link href="/login">Start free</Link>
             </Button>
           </div>
 
@@ -95,19 +95,19 @@ export function LandingHeader() {
 
             <div className="mt-3 pt-3 border-t border-white/10 flex flex-col gap-2.5">
               <Link
-                href="/login"
+                href="/book-a-demo"
                 onClick={() => setMobileOpen(false)}
                 className="block rounded-md px-3 py-2.5 text-sm text-neutral-300 hover:text-white hover:bg-white/5 transition-colors"
               >
-                Sign in
+                Book a demo
               </Link>
 
               <Button
                 asChild
                 className="bg-white text-neutral-900 hover:bg-white/90 font-medium w-full"
               >
-                <Link href="/book-a-demo" onClick={() => setMobileOpen(false)}>
-                  Book a demo
+                <Link href="/login" onClick={() => setMobileOpen(false)}>
+                  Start free
                 </Link>
               </Button>
             </div>

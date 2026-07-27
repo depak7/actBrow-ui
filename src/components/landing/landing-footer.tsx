@@ -132,18 +132,18 @@ export function LandingFooter() {
           </p>
 
           <div className="flex items-center gap-6">
-            <a
-              href="#"
+            <Link
+              href="/privacy"
               className="text-xs text-neutral-500 hover:text-white transition-colors"
             >
               Privacy
-            </a>
-            <a
-              href="#"
+            </Link>
+            <Link
+              href="/terms"
               className="text-xs text-neutral-500 hover:text-white transition-colors"
             >
               Terms
-            </a>
+            </Link>
             <a
               href="/self-hosting"
               className="text-xs text-neutral-500 hover:text-white transition-colors"

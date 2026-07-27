@@ -57,8 +57,8 @@ export function FinalCta() {
 
             {/* Subhead */}
             <p className="text-lg text-neutral-400 max-w-2xl mx-auto leading-relaxed">
-              Two script tags. Users ask. ActBrow navigates and acts. Book a demo
-              or start building.
+              Two script tags. Users ask. ActBrow navigates and acts. Start free
+              in minutes — or book a walkthrough.
             </p>
 
             {/* CTA buttons */}
@@ -68,8 +68,8 @@ export function FinalCta() {
                 size="lg"
                 className="bg-white text-neutral-900 hover:bg-white/90 font-medium"
               >
-                <Link href="/book-a-demo">
-                  Book a demo
+                <Link href="/login">
+                  Start free
                   <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                 </Link>
               </Button>
@@ -79,7 +79,7 @@ export function FinalCta() {
                 size="lg"
                 className="border border-white/15 bg-transparent text-white hover:bg-white/10"
               >
-                <Link href="/login">Start building</Link>
+                <Link href="/book-a-demo">Book a demo</Link>
               </Button>
             </div>
 

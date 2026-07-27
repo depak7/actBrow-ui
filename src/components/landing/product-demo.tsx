@@ -449,12 +449,20 @@ export function ProductDemo() {
         </div>
 
         {/* ── CTA ── */}
-        <div className="mt-10 flex justify-center">
+        <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <Button asChild size="lg" className="bg-white font-medium text-neutral-900 hover:bg-white/90">
-            <a href="/book-a-demo" className="inline-flex items-center gap-2">
-              Book a demo
+            <a href="/login" className="inline-flex items-center gap-2">
+              Start free
               <ArrowRight className="h-4 w-4" />
             </a>
+          </Button>
+          <Button
+            asChild
+            size="lg"
+            variant="outline"
+            className="border-white/15 bg-transparent text-white hover:bg-white/10"
+          >
+            <a href="/book-a-demo">Book a demo</a>
           </Button>
         </div>
 
