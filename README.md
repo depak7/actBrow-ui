@@ -2,21 +2,29 @@
 
 Next.js frontend for ActBrow - Embedded AI Assistant Platform.
 
+[![ActBrow — Top 5 Product of the Week on ScrollLaunch](https://www.scrolllaunch.com/api/badge/actbrow?variant=top5&theme=light)](https://www.scrolllaunch.com/products/actbrow?ref=badge)
+
 ## Quick Start
+
+Requires the [ActBrow backend](https://github.com/depak7/actBrow) running (default `http://localhost:8080`).
 
 ### 1. Install Dependencies
 
 ```bash
-cd ui
 npm install
 ```
 
 ### 2. Configure Backend URL
 
-Create `.env.local`:
+```bash
+cp .env.example .env.local
+```
+
+Set at least:
 
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:8080
+NEXT_PUBLIC_API_PROXY_TARGET=http://localhost:8080
+NEXT_PUBLIC_ACTBROW_BASE_URL=http://localhost:8080
 ```
 
 ### 3. Run Development Server
@@ -26,6 +34,10 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
+
+### Docker (with backend)
+
+From the backend repo, clone this repo as `ui/` then run `docker compose up --build`. See the [backend README](https://github.com/depak7/actBrow#quickstart-docker).
 
 ## Pages
 
@@ -54,7 +66,6 @@ Sign in with Google, then create an assistant. Each assistant has its own API ke
 ## Project Structure
 
 ```
-ui/
 ├── src/
 │   ├── app/
 │   │   ├── layout.tsx

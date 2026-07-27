@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Github, Twitter } from 'lucide-react';
 import { BrandLogo } from '@/components/brand-logo';
+import { ScrollLaunchBadge } from '@/components/landing/scrolllaunch-badge';
 import { GITHUB_URL } from '@/lib/site';
 
 const DEVELOPER_LINKS = [
@@ -61,6 +62,7 @@ export function LandingFooter() {
               Chat that finishes the work inside your product — navigates,
               calls APIs, done.
             </p>
+            <ScrollLaunchBadge />
             <p className="text-xs text-neutral-600">© ActBrow</p>
           </div>
 
