@@ -161,7 +161,7 @@ export default function AssistantsPage() {
         <CardHeader><CardTitle className="text-white">Your Assistants</CardTitle></CardHeader>
         <CardContent>
           <Table>
-            <TableHeader><TableRow className="border-white/10"><TableHead className="text-neutral-400">Name</TableHead><TableHead className="text-neutral-400">Generated key</TableHead><TableHead className="text-neutral-400">Model</TableHead><TableHead className="text-neutral-400">Flows</TableHead><TableHead className="text-neutral-400">Assistant ID</TableHead><TableHead className="text-neutral-400">Tools</TableHead><TableHead className="text-right text-neutral-400">Actions</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow className="border-white/10"><TableHead className="text-neutral-400">Name</TableHead><TableHead className="text-neutral-400">Slug</TableHead><TableHead className="text-neutral-400">Model</TableHead><TableHead className="text-neutral-400">Flows</TableHead><TableHead className="text-neutral-400">Assistant ID</TableHead><TableHead className="text-neutral-400">Tools</TableHead><TableHead className="text-right text-neutral-400">Actions</TableHead></TableRow></TableHeader>
             <TableBody>
               {loading ? (<TableRow><TableCell colSpan={7} className="text-center py-8 text-neutral-500">Loading...</TableCell></TableRow>) : assistants.length === 0 ? (<TableRow><TableCell colSpan={7} className="text-center py-8 text-neutral-500">No assistants yet. Create your first assistant to get started.</TableCell></TableRow>) : (
                 assistants.map((assistant) => (

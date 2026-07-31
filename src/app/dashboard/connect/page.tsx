@@ -9,7 +9,7 @@ import type { Assistant, AssistantConnect } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { RefreshCw, PlugZap, Plus } from 'lucide-react';
 import { CodePanel } from '@/components/code-panel';
-import { readStoredUserId, setActiveAssistant } from '@/lib/session';
+import { getActiveAssistantId, readStoredUserId, setActiveAssistant } from '@/lib/session';
 import Link from 'next/link';
 
 export default function ConnectPage() {
@@ -34,8 +34,11 @@ export default function ConnectPage() {
     const data = await assistantsApi.list(userId);
     setAssistants(data);
     if (!assistantId && data.length > 0) {
-      setAssistantId(data[0].id);
-      setActiveAssistant(data[0]);
+      const stored = getActiveAssistantId();
+      const next = (stored && data.some((a) => a.id === stored) && stored) || data[0].id;
+      const assistant = data.find((a) => a.id === next) || data[0];
+      setAssistantId(next);
+      setActiveAssistant(assistant);
     } else if (data.length === 0) {
       // No assistants yet — nothing to connect, so stop the spinner.
       setLoading(false);
@@ -214,11 +217,37 @@ export default function ConnectPage() {
                     copyLabel="Copy embed snippet"
                   />
                 ) : (
-                  <p className="text-sm text-neutral-500">Available after the first successful sync.</p>
+                  <p className="text-sm text-neutral-500">
+                    Widget key is created when you open Connect — copy the snippet below once available,
+                    or refresh status.
+                  </p>
                 )}
               </CardContent>
             </Card>
           </div>
+
+          <Card className="border-white/10 bg-white/5">
+            <CardHeader>
+              <CardTitle className="text-white">Magic link / deep-link prompt</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-neutral-300">
+                Append query params on any page where the widget is embedded to open chat with a
+                prefilled ask. Use <code className="text-neutral-100">actbrow_send=1</code> to send
+                automatically.
+              </p>
+              <CodePanel
+                code={`https://your-app.example.com/settings?actbrow_open=1&actbrow_prompt=${encodeURIComponent('Help me set up SSO')}&actbrow_send=1`}
+                filename="magic-link.txt"
+                language="text"
+                maxHeight="max-h-28"
+                copyLabel="Copy example"
+              />
+              <p className="text-xs text-neutral-500">
+                Also available in JS: <code className="text-neutral-300">ActbrowWidget.ask(&quot;…&quot;, &#123; send: true &#125;)</code>
+              </p>
+            </CardContent>
+          </Card>
         </>
       )}
     </div>

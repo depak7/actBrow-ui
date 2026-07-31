@@ -3,19 +3,23 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { assistantsApi, flowsApi, toolsApi } from '@/lib/api';
+import Link from 'next/link';
+import { activationApi, assistantsApi, flowsApi, toolsApi } from '@/lib/api';
 import {
   copyStoredAccountApiKey,
+  getActiveAssistantId,
   getStoredAccountApiKeyPreview,
   readStoredUserId,
   setActiveAssistant,
 } from '@/lib/session';
-import { Bot, Wrench, Workflow, ArrowRight, Key, Copy, Check } from 'lucide-react';
+import { Bot, Wrench, Workflow, ArrowRight, Key, Copy, Check, Circle, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import type { ActivationStatus } from '@/types';
 
 export default function DashboardPage() {
   const { toast } = useToast();
   const [stats, setStats] = useState({ assistants: 0, tools: 0, flows: 0 });
+  const [activation, setActivation] = useState<ActivationStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
   const [apiKeyPreview, setApiKeyPreview] = useState('');
@@ -45,15 +49,20 @@ export default function DashboardPage() {
         const assistants = await assistantsApi.list(userId);
         if (assistants.length === 0) {
           setStats({ assistants: 0, tools: 0, flows: 0 });
+          setActivation(null);
           return;
         }
-        setActiveAssistant(assistants[0]);
+        const stored = getActiveAssistantId();
+        const active =
+          assistants.find((a) => a.id === stored) || assistants[0];
+        setActiveAssistant(active);
         const tools = await toolsApi.list();
         const flowLists = await Promise.all(
           assistants.map((a) => flowsApi.list(a.id).catch(() => [])),
         );
         const flows = flowLists.reduce((sum, list) => sum + list.length, 0);
         setStats({ assistants: assistants.length, tools: tools.length, flows });
+        setActivation(await activationApi.get(active.id).catch(() => null));
       } catch (error) {
         const msg = error instanceof Error ? error.message : 'Failed to load dashboard';
         setStatsError(msg);
@@ -87,7 +96,7 @@ export default function DashboardPage() {
 
   const quickActions = [
     { label: 'Create Assistant', href: '/dashboard/assistants', icon: Bot },
-    { label: 'Create Flow', href: '/dashboard/flows', icon: Workflow },
+    { label: 'Connect / embed', href: '/dashboard/connect', icon: Workflow },
     { label: 'Create Tool', href: '/dashboard/tools', icon: Wrench },
   ];
 
@@ -97,6 +106,37 @@ export default function DashboardPage() {
         <h2 className="text-3xl font-semibold text-white">Dashboard</h2>
         <p className="text-neutral-400 mt-1">Manage your AI assistants and resources</p>
       </div>
+
+      {activation ? (
+        <Card className="border-emerald-500/20 bg-emerald-500/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white text-base">
+              Getting started — {activation.completedSteps}/{activation.totalSteps} for{' '}
+              {activation.assistantName}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {activation.steps.map((step) => (
+              <Link
+                key={step.id}
+                href={step.href}
+                className="flex items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-neutral-200 hover:bg-white/5"
+              >
+                {step.done ? (
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+                ) : (
+                  <Circle className="h-4 w-4 shrink-0 text-neutral-500" />
+                )}
+                <span className="flex-1">{step.title}</span>
+                <ArrowRight className="h-3.5 w-3.5 text-neutral-500" />
+              </Link>
+            ))}
+            <Button asChild variant="outline" className="mt-2 border-white/15 text-white hover:bg-white/5">
+              <Link href="/dashboard/checklist">Open full checklist</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card className="border-white/10 bg-white/5">
         <CardHeader className="pb-3">

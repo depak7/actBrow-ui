@@ -50,7 +50,7 @@ export interface Tool {
   description: string;
   inputSchema: Record<string, unknown>;
   outputSchema: Record<string, unknown> | null;
-  type: 'CLIENT' | 'BUILD_IN' | 'SERVER_BUILTIN' | 'SERVER_HTTP';
+  type: 'CLIENT' | 'BUILD_IN' | 'SERVER_BUILTIN' | 'SERVER_HTTP' | 'MCP';
   version: string;
   enabled: boolean;
   executorRef: string | null;
@@ -117,4 +117,61 @@ export interface Run {
   lastError: string | null;
   createdAt: string;
   completedAt: string | null;
+}
+
+export interface ActivationStatus {
+  assistantId: string;
+  assistantName: string;
+  completedSteps: number;
+  totalSteps: number;
+  ready: boolean;
+  steps: {
+    id: string;
+    title: string;
+    description: string;
+    done: boolean;
+    href: string;
+  }[];
+  embedSnippet: string | null;
+  magicLinkExample: string;
+}
+
+export interface Insights {
+  assistantId: string;
+  conversationCount: number;
+  runCount: number;
+  completedRuns: number;
+  failedRuns: number;
+  inProgressRuns: number;
+  successRate: number;
+  topIntents: { text: string; count: number }[];
+  failedTools: { toolKey: string; count: number }[];
+  recentFailures: { runId: string; error: string; createdAt: string }[];
+}
+
+export interface McpServer {
+  id: string;
+  assistantId: string;
+  name: string;
+  serverUrl: string;
+  /** Redacted metadata only (`configured`, `headerNames`) — never secret values. */
+  authHeaders: { configured?: boolean; headerNames?: string[] } | Record<string, unknown>;
+  enabled: boolean;
+  toolKeys: string[];
+  lastSyncedAt: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface WidgetTheme {
+  accent?: string;
+  background?: string;
+  panelBackground?: string;
+  text?: string;
+  launcherBackground?: string;
+  launcherPosition?: 'bottom-right' | 'bottom-left';
+  title?: string;
+  subtitle?: string;
+  fontFamily?: string;
+  [key: string]: unknown;
 }

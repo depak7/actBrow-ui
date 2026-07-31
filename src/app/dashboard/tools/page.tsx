@@ -13,7 +13,7 @@ import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { readStoredUserId, setActiveAssistant } from '@/lib/session';
+import { getActiveAssistantId, readStoredUserId, setActiveAssistant } from '@/lib/session';
 import { parseCurl, type ParsedCurl } from '@/lib/curl-parser';
 import { buildSyntheticCurlFromTool } from '@/lib/curl-from-tool';
 
@@ -107,8 +107,11 @@ export default function ToolsPage() {
         const list = await assistantsApi.list(userId);
         setAssistants(list);
         if (list.length > 0) {
-          setActiveAssistant(list[0]);
-          setPageAssistantId((cur) => cur || list[0].id);
+          const stored = getActiveAssistantId();
+          const next = (stored && list.some((a) => a.id === stored) && stored) || list[0].id;
+          const assistant = list.find((a) => a.id === next) || list[0];
+          setActiveAssistant(assistant);
+          setPageAssistantId((cur) => cur || next);
         }
       } catch {
         toast({ title: 'Error', description: 'Failed to load assistants', variant: 'destructive' });
@@ -131,7 +134,7 @@ export default function ToolsPage() {
         const assistant = assistants.find((a) => a.id === pageAssistantId);
         if (assistant) setActiveAssistant(assistant);
         const data = await assistantToolsApi.list(pageAssistantId);
-        if (!cancelled) setTools(data.filter((t) => t.type === 'SERVER_HTTP'));
+        if (!cancelled) setTools(data.filter((t) => t.type === 'SERVER_HTTP' || t.type === 'MCP'));
       } catch {
         if (!cancelled) {
           toast({ title: 'Error', description: 'Failed to load tools for this assistant', variant: 'destructive' });
@@ -148,7 +151,7 @@ export default function ToolsPage() {
   const refresh = async () => {
     if (!pageAssistantId) return;
     const data = await assistantToolsApi.list(pageAssistantId);
-    setTools(data.filter((t) => t.type === 'SERVER_HTTP'));
+    setTools(data.filter((t) => t.type === 'SERVER_HTTP' || t.type === 'MCP'));
   };
 
   const onCurlChange = (curl: string) => {

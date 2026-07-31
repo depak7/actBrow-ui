@@ -79,6 +79,11 @@ export function clearActiveAssistant() {
   window.dispatchEvent(new Event('actbrow-active-assistant-changed'));
 }
 
+export function getActiveAssistantId(): string | null {
+  if (!hasStorage()) return null;
+  return localStorage.getItem(ACTIVE_ASSISTANT_ID_KEY);
+}
+
 export function clearSession() {
   if (!hasStorage()) return;
   clearActiveAssistant();

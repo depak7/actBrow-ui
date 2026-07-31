@@ -19,7 +19,6 @@ import {
   Link2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ScrollLaunchBadge } from "@/components/landing/scrolllaunch-badge";
 
 const CAL_NAV: { icon: React.ComponentType<{ className?: string }>; label: string; active?: boolean }[] = [
   { icon: LayoutGrid, label: "Event Types", active: true },
@@ -112,10 +111,6 @@ export function Hero() {
             Two script tags&nbsp;&nbsp;·&nbsp;&nbsp;No backend
             rewrite&nbsp;&nbsp;·&nbsp;&nbsp;Self-hostable
           </p>
-
-          <div className="animate-fade-in-up animate-fade-in-up-delay-3 mt-6 flex justify-center">
-            <ScrollLaunchBadge />
-          </div>
         </div>
 
         {/* ── Product Mockup: ActBrow chat widget running inside Cal.com ── */}

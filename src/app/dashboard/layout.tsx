@@ -24,6 +24,9 @@ import {
   Key,
   Copy,
   Check,
+  BarChart3,
+  Server,
+  Palette,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -33,6 +36,7 @@ import {
   readStoredUser,
 } from '@/lib/session';
 import { useToast } from '@/hooks/use-toast';
+import { ActiveAssistantSelect } from '@/components/active-assistant-select';
 
 export default function DashboardLayout({
   children,
@@ -95,14 +99,17 @@ export default function DashboardLayout({
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/dashboard/assistants', label: 'Assistants', icon: BotMessageSquare },
+    { href: '/dashboard/checklist', label: 'Getting started', icon: Bot },
+    { href: '/dashboard/insights', label: 'Insights', icon: BarChart3 },
     { href: '/dashboard/conversations', label: 'Conversations', icon: MessageSquareText },
     { href: '/dashboard/connect', label: 'Connect', icon: PlugZap },
+    { href: '/dashboard/theme', label: 'Widget theme', icon: Palette },
     { href: '/dashboard/navigation', label: 'Navigation', icon: Compass },
     { href: '/dashboard/flows', label: 'Navigation Flows', icon: Workflow },
     { href: '/dashboard/tools', label: 'Tools', icon: Wrench },
     { href: '/dashboard/integrations', label: 'API Integrations', icon: Webhook },
+    { href: '/dashboard/mcp', label: 'MCP servers', icon: Server },
     { href: '/dashboard/knowledge', label: 'Knowledge', icon: BookOpenCheck },
-    { href: '/dashboard/checklist', label: 'Checklist', icon: Bot },
   ];
 
   if (loading) {
@@ -143,11 +150,14 @@ export default function DashboardLayout({
           <div className="rounded-lg bg-white/5 border border-white/10 p-3 space-y-2">
             <div className="flex items-center gap-2 text-neutral-400">
               <Key className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              <span className="text-xs font-medium uppercase tracking-wide text-neutral-400">API key</span>
+              <span className="text-xs font-medium uppercase tracking-wide text-neutral-400">Account key</span>
             </div>
+            <p className="text-[10px] text-neutral-500 leading-snug">
+              Dashboard only — never embed. Use widget key (<code className="font-mono">wk_</code>) from Connect.
+            </p>
             {apiKeyPreview ? (
               <>
-                <code className="text-[10px] text-neutral-300 font-mono break-all block" aria-label="API key preview">
+                <code className="text-[10px] text-neutral-300 font-mono break-all block" aria-label="Account API key preview">
                   {apiKeyPreview}
                 </code>
                 <Button
@@ -155,7 +165,7 @@ export default function DashboardLayout({
                   size="sm"
                   className="w-full border-white/10 text-xs text-white h-8 gap-2"
                   onClick={() => void copyApiKey()}
-                  aria-label="Copy API key"
+                  aria-label="Copy account API key"
                 >
                   {apiKeyCopied ? <Check className="h-3.5 w-3.5" aria-hidden /> : <Copy className="h-3.5 w-3.5" aria-hidden />}
                   Copy
@@ -209,11 +219,14 @@ export default function DashboardLayout({
             <div className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 space-y-2">
               <div className="flex items-center gap-2 text-neutral-400">
                 <Key className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                <span className="text-xs font-medium uppercase tracking-wide text-neutral-400">API key</span>
+                <span className="text-xs font-medium uppercase tracking-wide text-neutral-400">Account key</span>
               </div>
+              <p className="text-[10px] text-neutral-500 leading-snug">
+                Dashboard/operator API only. Never embed this in the browser — use the widget key (<code className="font-mono">wk_</code>) from Connect.
+              </p>
               {apiKeyPreview ? (
                 <>
-                  <code className="text-[10px] text-neutral-300 font-mono break-all block" aria-label="API key preview">
+                  <code className="text-[10px] text-neutral-300 font-mono break-all block" aria-label="Account API key preview">
                     {apiKeyPreview}
                   </code>
                   <Button
@@ -221,7 +234,7 @@ export default function DashboardLayout({
                     size="sm"
                     className="w-full border-white/10 text-xs text-white h-8 gap-2"
                     onClick={() => void copyApiKey()}
-                    aria-label="Copy API key"
+                    aria-label="Copy account API key"
                   >
                     {apiKeyCopied ? <Check className="h-3.5 w-3.5" aria-hidden /> : <Copy className="h-3.5 w-3.5" aria-hidden />}
                     Copy
@@ -239,10 +252,11 @@ export default function DashboardLayout({
         </aside>
 
         <main className="flex-1 min-w-0">
-          <header className="border-b border-white/10 px-6 py-4 flex items-center justify-between sticky top-0 z-40 bg-background/95 backdrop-blur">
+          <header className="border-b border-white/10 px-6 py-4 flex items-center justify-between gap-4 sticky top-0 z-40 bg-background/95 backdrop-blur">
             <h1 className="text-2xl font-semibold text-white capitalize">
               {pathname.split('/').pop()?.replace(/-/g, ' ')}
             </h1>
+            <ActiveAssistantSelect />
           </header>
 
           <div className="p-6">{children}</div>

@@ -1,5 +1,20 @@
 import api from './api-client';
-import type { Assistant, NavigationFlow, Tool, Conversation, ConversationMessage, Run, KnowledgeDocument, AssistantConnect, ApiIntegration, ImportApiSpecResult } from '@/types';
+import type {
+  Assistant,
+  NavigationFlow,
+  Tool,
+  Conversation,
+  ConversationMessage,
+  Run,
+  KnowledgeDocument,
+  AssistantConnect,
+  ApiIntegration,
+  ImportApiSpecResult,
+  ActivationStatus,
+  Insights,
+  McpServer,
+  WidgetTheme,
+} from '@/types';
 
 export const assistantsApi = {
   list: (userId?: string) => {
@@ -119,4 +134,46 @@ export const runsApi = {
   get: (id: string) => api.get<Run>(`/v1/runs/${id}`).then((res) => res.data),
   submitToolResult: (runId: string, toolCallId: string, data: { success: boolean; textSummary?: string; structuredOutput?: unknown; error?: string }) =>
     api.post(`/v1/runs/${runId}/tool-results`, { ...data, toolCallId }),
+};
+
+export const activationApi = {
+  get: (assistantId: string) =>
+    api.get<ActivationStatus>(`/v1/assistants/${assistantId}/activation`).then((res) => res.data),
+};
+
+export const insightsApi = {
+  get: (assistantId: string) =>
+    api.get<Insights>(`/v1/assistants/${assistantId}/insights`).then((res) => res.data),
+};
+
+export const mcpServersApi = {
+  list: (assistantId: string) =>
+    api.get<McpServer[]>(`/v1/assistants/${assistantId}/mcp-servers`).then((res) => res.data),
+  create: (
+    assistantId: string,
+    data: { name: string; serverUrl: string; authHeaders?: Record<string, string>; enabled?: boolean }
+  ) => api.post<McpServer>(`/v1/assistants/${assistantId}/mcp-servers`, data).then((res) => res.data),
+  update: (
+    assistantId: string,
+    serverId: string,
+    data: { name: string; serverUrl: string; authHeaders?: Record<string, string>; enabled?: boolean }
+  ) =>
+    api.put<McpServer>(`/v1/assistants/${assistantId}/mcp-servers/${serverId}`, data).then((res) => res.data),
+  sync: (assistantId: string, serverId: string) =>
+    api
+      .post<{ serverId: string; name: string; created: number; updated: number; removed: number; toolKeys: string[] }>(
+        `/v1/assistants/${assistantId}/mcp-servers/${serverId}/sync`
+      )
+      .then((res) => res.data),
+  delete: (assistantId: string, serverId: string) =>
+    api.delete(`/v1/assistants/${assistantId}/mcp-servers/${serverId}`),
+};
+
+export const widgetThemeApi = {
+  get: (assistantId: string) =>
+    api.get<{ assistantId: string; theme: WidgetTheme }>(`/v1/assistants/${assistantId}/widget-theme`).then((res) => res.data),
+  update: (assistantId: string, theme: WidgetTheme) =>
+    api
+      .put<{ assistantId: string; theme: WidgetTheme }>(`/v1/assistants/${assistantId}/widget-theme`, { theme })
+      .then((res) => res.data),
 };
