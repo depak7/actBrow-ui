@@ -7,7 +7,7 @@ import { safetyApi } from '@/lib/api';
 import type { CircuitStatus, SafetyStatus } from '@/types';
 import { areAssistantsResolved, getActiveAssistantId } from '@/lib/session';
 import { useToast } from '@/hooks/use-toast';
-import { AlertTriangle, Loader2, RotateCcw, ShieldAlert, ShieldCheck, Zap } from 'lucide-react';
+import { Loader2, RotateCcw, ShieldAlert, ShieldCheck, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 function Toggle({
@@ -158,22 +158,6 @@ export default function SafetyPage() {
           Runtime overrides for incident response — stop tool execution, run write tools in shadow
           mode, and clear tripped circuit breakers.
         </p>
-      </div>
-
-      {/* Always visible: these overrides do not survive a restart. */}
-      <div className="flex items-start gap-3 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
-        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-        <div className="space-y-1">
-          <p className="font-medium text-amber-100">These overrides are in-memory only.</p>
-          <p className="text-amber-200/90">
-            They do <strong>not</strong> survive a restart or redeploy. After a deploy the process
-            reverts to the <code className="font-mono text-amber-100">ACTBROW_TOOLS_ENABLED</code> /{' '}
-            <code className="font-mono text-amber-100">ACTBROW_SHADOW_MODE</code> environment
-            baseline — so a kill switch flipped here will silently turn tools back on the next time
-            the service restarts. For anything longer than the incident, change the environment
-            variables too.
-          </p>
-        </div>
       </div>
 
       {loading ? (
