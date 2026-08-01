@@ -70,9 +70,9 @@ export function Hero() {
 
           {/* Subhead — who + how + vs status quo, one breath */}
           <p className="animate-fade-in-up animate-fade-in-up-delay-2 mx-auto mt-6 max-w-xl text-base leading-relaxed text-neutral-400 md:text-lg">
-            Users ask in plain English. ActBrow opens the right screen, calls
-            your APIs, and completes the task — so they never open a ticket.
-            Unlike Intercom or Zendesk, it acts inside your app.
+            Support tools automate the ticket. ActBrow automates the task
+            inside your product. Users ask in plain English, then it navigates
+            to the right screen and calls your APIs to finish the request.
           </p>
 
           {/* CTAs */}

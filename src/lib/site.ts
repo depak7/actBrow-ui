@@ -17,7 +17,7 @@ export const SITE_TAGLINE =
   'Chat that finishes the work inside your product';
 
 export const SITE_DESCRIPTION =
-  'Embed ActBrow in two script tags. Users ask in plain English — it navigates your app, calls your APIs, and finishes the task. Unlike Intercom or Zendesk, it acts inside your product. Self-host with Docker.';
+  'Support tools automate the ticket. ActBrow automates the task inside your product. Users ask in plain English, then it navigates to the right screen and calls your APIs to finish the request.';
 
 /** Absolute URL for a site-relative path (leading slash optional). */
 export function absoluteUrl(path = '/'): string {
