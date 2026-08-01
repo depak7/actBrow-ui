@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { Bot, MessageSquareText, RefreshCw } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Activity, Bot, MessageSquareText, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { conversationsApi } from '@/lib/api';
-import type { Conversation, ConversationMessage } from '@/types';
+import { conversationsApi, runInspectionApi } from '@/lib/api';
+import type { Conversation, ConversationMessage, RunInspection, RunSummary } from '@/types';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { RunList } from '@/components/runs/run-list';
+import { RunTimeline, RunTimelineSkeleton } from '@/components/runs/run-timeline';
 
 function formatDate(value?: string | null) {
   if (!value) return 'No messages yet';
@@ -30,6 +32,11 @@ export default function ConversationsPage() {
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [runs, setRuns] = useState<RunSummary[]>([]);
+  const [loadingRuns, setLoadingRuns] = useState(false);
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const [inspection, setInspection] = useState<RunInspection | null>(null);
+  const [loadingInspection, setLoadingInspection] = useState(false);
 
   const groupedConversations = useMemo(() => {
     return conversations.reduce<Record<string, Conversation[]>>((groups, conversation) => {
@@ -84,6 +91,69 @@ export default function ConversationsPage() {
 
     void fetchMessages();
   }, [selectedConversationId, toast]);
+
+  const fetchRuns = useCallback(
+    async (conversationId: string) => {
+      try {
+        setLoadingRuns(true);
+        const data = await runInspectionApi.listForConversation(conversationId);
+        setRuns(data);
+        setSelectedRunId((current) => {
+          if (current && data.some((run) => run.id === current)) {
+            return current;
+          }
+          return data[0]?.id || null;
+        });
+      } catch (error) {
+        setRuns([]);
+        setSelectedRunId(null);
+        toast({ title: 'Error', description: 'Failed to load runs for this conversation', variant: 'destructive' });
+      } finally {
+        setLoadingRuns(false);
+      }
+    },
+    [toast]
+  );
+
+  useEffect(() => {
+    if (!selectedConversationId) {
+      setRuns([]);
+      setSelectedRunId(null);
+      return;
+    }
+    setSelectedRunId(null);
+    void fetchRuns(selectedConversationId);
+  }, [selectedConversationId, fetchRuns]);
+
+  useEffect(() => {
+    if (!selectedRunId) {
+      setInspection(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchInspection = async () => {
+      try {
+        setLoadingInspection(true);
+        const data = await runInspectionApi.steps(selectedRunId);
+        if (!cancelled) setInspection(data);
+      } catch (error) {
+        if (!cancelled) {
+          setInspection(null);
+          toast({ title: 'Error', description: 'Failed to load run steps', variant: 'destructive' });
+        }
+      } finally {
+        if (!cancelled) setLoadingInspection(false);
+      }
+    };
+
+    void fetchInspection();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedRunId, toast]);
 
   return (
     <div className="space-y-6">
@@ -210,6 +280,65 @@ export default function ConversationsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="border-white/10 bg-white/5">
+        <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+          <div>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Run inspection
+            </CardTitle>
+            <p className="mt-1 text-xs text-neutral-400">
+              Why the agent did what it did: plan, act and verify steps recorded for each run.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="border-white/10 text-white gap-2"
+            onClick={() => selectedConversationId && void fetchRuns(selectedConversationId)}
+            disabled={!selectedConversationId || loadingRuns}
+          >
+            <RefreshCw className={cn('h-4 w-4', loadingRuns && 'animate-spin')} />
+            Refresh runs
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {!selectedConversation ? (
+            <div className="flex min-h-[160px] items-center justify-center rounded-xl border border-dashed border-white/10 text-sm text-neutral-500">
+              Select a conversation to inspect its runs.
+            </div>
+          ) : (
+            <div className="grid gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-white">Runs</h3>
+                <RunList
+                  runs={runs}
+                  selectedRunId={selectedRunId}
+                  onSelect={setSelectedRunId}
+                  loading={loadingRuns}
+                />
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-white">Timeline</h3>
+                {loadingInspection ? (
+                  <RunTimelineSkeleton />
+                ) : !selectedRunId || !inspection ? (
+                  <div className="flex min-h-[200px] items-center justify-center rounded-xl border border-dashed border-white/10 text-sm text-neutral-500">
+                    {runs.length === 0 && !loadingRuns
+                      ? 'No runs for this conversation yet.'
+                      : 'Select a run to see its steps.'}
+                  </div>
+                ) : (
+                  <RunTimeline inspection={inspection} />
+                )}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

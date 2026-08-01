@@ -84,6 +84,26 @@ export function getActiveAssistantId(): string | null {
   return localStorage.getItem(ACTIVE_ASSISTANT_ID_KEY);
 }
 
+/**
+ * Whether the assistant list has been fetched at least once this page load.
+ *
+ * getActiveAssistantId() returns null both while the list is still loading AND when the account
+ * genuinely has no assistants. Without this flag a brand-new user — the case that matters most —
+ * sits on a loading skeleton forever instead of reaching the "create an assistant" empty state.
+ */
+let assistantsResolved = false;
+
+export function markAssistantsResolved() {
+  assistantsResolved = true;
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('actbrow-active-assistant-changed'));
+  }
+}
+
+export function areAssistantsResolved() {
+  return assistantsResolved;
+}
+
 export function clearSession() {
   if (!hasStorage()) return;
   clearActiveAssistant();

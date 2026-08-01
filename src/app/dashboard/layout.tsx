@@ -27,6 +27,7 @@ import {
   BarChart3,
   Server,
   Palette,
+  ShieldAlert,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -110,6 +111,7 @@ export default function DashboardLayout({
     { href: '/dashboard/integrations', label: 'API Integrations', icon: Webhook },
     { href: '/dashboard/mcp', label: 'MCP servers', icon: Server },
     { href: '/dashboard/knowledge', label: 'Knowledge', icon: BookOpenCheck },
+    { href: '/dashboard/safety', label: 'Safety', icon: ShieldAlert },
   ];
 
   if (loading) {

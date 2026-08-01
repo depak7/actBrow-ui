@@ -1,18 +1,21 @@
 import api from './api-client';
 import type {
+  ActivationStatus,
+  ApiIntegration,
   Assistant,
-  NavigationFlow,
-  Tool,
+  AssistantConnect,
   Conversation,
   ConversationMessage,
-  Run,
-  KnowledgeDocument,
-  AssistantConnect,
-  ApiIntegration,
   ImportApiSpecResult,
-  ActivationStatus,
   Insights,
+  KnowledgeDocument,
   McpServer,
+  NavigationFlow,
+  Run,
+  RunInspection,
+  RunSummary,
+  SafetyStatus,
+  Tool,
   WidgetTheme,
 } from '@/types';
 
@@ -129,8 +132,9 @@ export const conversationsApi = {
 };
 
 export const runsApi = {
-  create: (conversationId: string, data: { userContent: string }) =>
-    api.post<Run>(`/v1/conversations/${conversationId}/runs`, data).then((res) => res.data),
+  /** Starts a turn. The backend route is /turns and the body field is `content` (see TurnRequest). */
+  create: (conversationId: string, data: { content: string; pageContext?: Record<string, unknown> }) =>
+    api.post<Run>(`/v1/conversations/${conversationId}/turns`, data).then((res) => res.data),
   get: (id: string) => api.get<Run>(`/v1/runs/${id}`).then((res) => res.data),
   submitToolResult: (runId: string, toolCallId: string, data: { success: boolean; textSummary?: string; structuredOutput?: unknown; error?: string }) =>
     api.post(`/v1/runs/${runId}/tool-results`, { ...data, toolCallId }),
@@ -175,5 +179,25 @@ export const widgetThemeApi = {
   update: (assistantId: string, theme: WidgetTheme) =>
     api
       .put<{ assistantId: string; theme: WidgetTheme }>(`/v1/assistants/${assistantId}/widget-theme`, { theme })
+      .then((res) => res.data),
+};
+
+export const runInspectionApi = {
+  listForConversation: (conversationId: string) =>
+    api.get<RunSummary[]>(`/v1/conversations/${conversationId}/runs`).then((res) => res.data),
+  steps: (runId: string) =>
+    api.get<RunInspection>(`/v1/runs/${runId}/steps`).then((res) => res.data),
+};
+
+export const safetyApi = {
+  get: (assistantId: string) =>
+    api.get<SafetyStatus>(`/v1/assistants/${assistantId}/safety`).then((res) => res.data),
+  update: (assistantId: string, patch: { toolsEnabled?: boolean; shadowMode?: boolean }) =>
+    api.put<SafetyStatus>(`/v1/assistants/${assistantId}/safety`, patch).then((res) => res.data),
+  resetCircuit: (assistantId: string, toolKey: string) =>
+    api
+      .post<SafetyStatus>(
+        `/v1/assistants/${assistantId}/safety/circuits/${encodeURIComponent(toolKey)}/reset`,
+      )
       .then((res) => res.data),
 };

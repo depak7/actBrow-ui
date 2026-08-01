@@ -175,3 +175,83 @@ export interface WidgetTheme {
   fontFamily?: string;
   [key: string]: unknown;
 }
+
+/** Step types recorded by the run harness, in the order they occur within a step. */
+export type RunStepType =
+  | 'MODEL_DECISION'
+  | 'TOOL_CALL'
+  | 'TOOL_RESULT'
+  | 'VERIFIER_DECISION'
+  | 'POLICY_DECISION'
+  | 'FINAL_RESPONSE';
+
+export type RunStatus =
+  | 'PENDING'
+  | 'IN_PROGRESS'
+  | 'WAITING_FOR_CLIENT_TOOL'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'CANCELLED';
+
+export interface RunSummary {
+  id: string;
+  status: RunStatus;
+  stepCount: number;
+  lastError: string | null;
+  createdAt: string;
+  completedAt: string | null;
+  /** Null while the run is still active. */
+  durationMs: number | null;
+  toolCallCount: number;
+  failedToolCount: number;
+}
+
+export interface RunStep {
+  id: string;
+  stepIndex: number;
+  type: RunStepType;
+  payload: string;
+  createdAt: string;
+}
+
+/** Written only when a run reaches a terminal state, so this is null for in-flight runs. */
+export interface RunTrace {
+  id: string;
+  runId: string;
+  conversationId: string;
+  assistantId: string;
+  promptVersion: string | null;
+  toolsetVersion: string | null;
+  planningOutcomes: string | null;
+  verifierDecisions: string | null;
+  executionAttempts: number | null;
+  toolCallCount: number | null;
+  finalOutcome: string | null;
+  latencyMs: number | null;
+  createdAt: string;
+}
+
+export interface RunInspection {
+  runId: string;
+  status: RunStatus;
+  stepCount: number;
+  lastError: string | null;
+  createdAt: string;
+  completedAt: string | null;
+  durationMs: number | null;
+  steps: RunStep[];
+  trace: RunTrace | null;
+}
+
+export interface CircuitStatus {
+  toolKey: string;
+  open: boolean;
+}
+
+export interface SafetyStatus {
+  assistantId: string;
+  toolsEnabled: boolean;
+  shadowMode: boolean;
+  /** Every circuit tracked for this assistant, open ones first. */
+  circuits: CircuitStatus[];
+}

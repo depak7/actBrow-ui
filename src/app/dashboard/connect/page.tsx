@@ -9,6 +9,7 @@ import type { Assistant, AssistantConnect } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { RefreshCw, PlugZap, Plus } from 'lucide-react';
 import { CodePanel } from '@/components/code-panel';
+import { AssistantTester } from '@/components/connect/assistant-tester';
 import { getActiveAssistantId, readStoredUserId, setActiveAssistant } from '@/lib/session';
 import Link from 'next/link';
 
@@ -224,6 +225,10 @@ export default function ConnectPage() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Sits right after the embed snippet: the moment setup is done is the moment you
+                want to confirm the assistant actually answers. */}
+            <AssistantTester assistantId={assistantId} />
           </div>
 
           <Card className="border-white/10 bg-white/5">

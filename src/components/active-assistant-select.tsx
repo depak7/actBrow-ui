@@ -3,7 +3,12 @@
 import { useEffect, useState } from 'react';
 import { assistantsApi } from '@/lib/api';
 import type { Assistant } from '@/types';
-import { getActiveAssistantId, readStoredUserId, setActiveAssistant } from '@/lib/session';
+import {
+  getActiveAssistantId,
+  markAssistantsResolved,
+  readStoredUserId,
+  setActiveAssistant,
+} from '@/lib/session';
 
 export function ActiveAssistantSelect({ className = '' }: { className?: string }) {
   const [assistants, setAssistants] = useState<Assistant[]>([]);
@@ -33,6 +38,11 @@ export function ActiveAssistantSelect({ className = '' }: { className?: string }
         }
       } catch {
         // layout can show empty selector
+      } finally {
+        // Always announce that the list settled — including the empty and failed cases. Pages key
+        // their "create an assistant first" empty state off this; without it a brand-new account
+        // would wait on a loading skeleton that never resolves.
+        if (!cancelled) markAssistantsResolved();
       }
     };
     void load();

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { widgetThemeApi } from '@/lib/api';
 import type { WidgetTheme } from '@/types';
-import { getActiveAssistantId } from '@/lib/session';
+import { areAssistantsResolved, getActiveAssistantId } from '@/lib/session';
 import { useToast } from '@/hooks/use-toast';
 import { AlertTriangle, Check, Loader2, Lock, RotateCcw, Save } from 'lucide-react';
 import { ColorField } from '@/components/theme/color-field';
@@ -24,6 +24,8 @@ import { cn } from '@/lib/utils';
 export default function ThemePage() {
   const { toast } = useToast();
   const [assistantId, setAssistantId] = useState<string | null>(null);
+  // False until the header selector has fetched the assistant list at least once.
+  const [resolved, setResolved] = useState(false);
   const [theme, setTheme] = useState<WidgetTheme>(DEFAULT_THEME);
   const [saved, setSaved] = useState<WidgetTheme>(DEFAULT_THEME);
   const [loading, setLoading] = useState(true);
@@ -32,7 +34,10 @@ export default function ThemePage() {
 
   // The dashboard header owns assistant selection; mirror it instead of rendering a second picker.
   useEffect(() => {
-    const sync = () => setAssistantId(getActiveAssistantId());
+    const sync = () => {
+      setAssistantId(getActiveAssistantId());
+      setResolved(areAssistantsResolved());
+    };
     sync();
     window.addEventListener('actbrow-active-assistant-changed', sync);
     return () => window.removeEventListener('actbrow-active-assistant-changed', sync);
@@ -46,7 +51,9 @@ export default function ThemePage() {
   }, []);
 
   useEffect(() => {
-    if (assistantId === null) return;
+    // Wait for the header selector to report the list settled; null alone cannot tell
+    // "still loading" apart from "this account has no assistants".
+    if (!resolved) return;
     if (!assistantId) {
       setLoading(false);
       return;
@@ -55,7 +62,7 @@ export default function ThemePage() {
     load(assistantId)
       .catch(() => toast({ title: 'Error', description: 'Failed to load theme', variant: 'destructive' }))
       .finally(() => setLoading(false));
-  }, [assistantId, load, toast]);
+  }, [assistantId, resolved, load, toast]);
 
   const dirty = useMemo(
     () => JSON.stringify(theme) !== JSON.stringify(saved),

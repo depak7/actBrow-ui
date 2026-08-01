@@ -4,49 +4,57 @@ import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { assistantsApi, mcpServersApi } from '@/lib/api';
-import type { Assistant, McpServer } from '@/types';
-import { getActiveAssistantId, readStoredUserId, setActiveAssistant } from '@/lib/session';
+import { mcpServersApi } from '@/lib/api';
+import type { McpServer } from '@/types';
+import { areAssistantsResolved, getActiveAssistantId } from '@/lib/session';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Plus, RefreshCw, Trash2 } from 'lucide-react';
 
 export default function McpPage() {
   const { toast } = useToast();
-  const [assistants, setAssistants] = useState<Assistant[]>([]);
-  const [assistantId, setAssistantId] = useState('');
+  const [assistantId, setAssistantId] = useState<string | null>(null);
+  // False until the header selector has fetched the assistant list at least once.
+  const [resolved, setResolved] = useState(false);
   const [servers, setServers] = useState<McpServer[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', serverUrl: '', authHeader: '' });
 
+  // The dashboard header owns assistant selection; mirror it instead of rendering a second picker.
+  useEffect(() => {
+    const sync = () => {
+      setAssistantId(getActiveAssistantId());
+      setResolved(areAssistantsResolved());
+    };
+    sync();
+    window.addEventListener('actbrow-active-assistant-changed', sync);
+    return () => window.removeEventListener('actbrow-active-assistant-changed', sync);
+  }, []);
+
   const load = useCallback(async () => {
-    const userId = readStoredUserId();
-    if (!userId) throw new Error('Missing user');
-    const list = await assistantsApi.list(userId);
-    setAssistants(list);
-    const stored = getActiveAssistantId();
-    const selected =
-      (assistantId && list.some((a) => a.id === assistantId) && assistantId) ||
-      (stored && list.some((a) => a.id === stored) && stored) ||
-      list[0]?.id ||
-      '';
-    if (selected !== assistantId) setAssistantId(selected);
-    if (!selected) {
+    const id = getActiveAssistantId();
+    if (!id) {
       setServers([]);
       return;
     }
-    const assistant = list.find((a) => a.id === selected);
-    if (assistant) setActiveAssistant(assistant);
-    setServers(await mcpServersApi.list(selected));
-  }, [assistantId]);
+    setServers(await mcpServersApi.list(id));
+  }, []);
 
   useEffect(() => {
+    // Wait for the header selector to report the list settled; null alone cannot tell
+    // "still loading" apart from "this account has no assistants".
+    if (!resolved) return;
+    if (!assistantId) {
+      setServers([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     load()
       .catch(() => toast({ title: 'Error', description: 'Failed to load MCP servers', variant: 'destructive' }))
       .finally(() => setLoading(false));
-  }, [load, toast]);
+  }, [assistantId, resolved, load, toast]);
 
   const createServer = async () => {
     if (!assistantId || !form.name.trim() || !form.serverUrl.trim()) {
@@ -121,20 +129,6 @@ export default function McpPage() {
           Connect an HTTP MCP server, sync its tools, and let the agent call them.
         </p>
       </div>
-
-      {assistants.length > 0 ? (
-        <select
-          value={assistantId}
-          onChange={(e) => setAssistantId(e.target.value)}
-          className="flex h-10 w-full max-w-md rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white"
-        >
-          {assistants.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name}
-            </option>
-          ))}
-        </select>
-      ) : null}
 
       <Card className="border-white/10 bg-white/5">
         <CardHeader>
