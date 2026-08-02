@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { BrandLogo } from '@/components/brand-logo';
+import { QueryProvider } from '@/components/query-provider';
 import {
   Bot,
   LayoutDashboard,
@@ -123,6 +124,7 @@ export default function DashboardLayout({
   }
 
   return (
+    <QueryProvider>
     <div className="min-h-screen bg-gradient-dark bg-grid">
       <div className="lg:hidden border-b border-white/10 px-4 py-3 flex items-center justify-between sticky top-0 z-50 bg-background/95 backdrop-blur">
         <BrandLogo heightClassName="h-12" widthClassName="w-10" href="/" />
@@ -265,5 +267,6 @@ export default function DashboardLayout({
         </main>
       </div>
     </div>
+    </QueryProvider>
   );
 }

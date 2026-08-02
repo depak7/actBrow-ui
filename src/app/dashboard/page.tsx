@@ -1,15 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { activationApi, assistantsApi, flowsApi, toolsApi } from '@/lib/api';
+import { useActivation, useAssistants, useFlowCounts, useTools } from '@/lib/queries';
 import {
   copyStoredAccountApiKey,
   getActiveAssistantId,
   getStoredAccountApiKeyPreview,
-  readStoredUserId,
   setActiveAssistant,
 } from '@/lib/session';
 import { Bot, Wrench, Workflow, ArrowRight, Key, Copy, Check, Circle, CheckCircle2 } from 'lucide-react';
@@ -18,12 +17,41 @@ import type { ActivationStatus } from '@/types';
 
 export default function DashboardPage() {
   const { toast } = useToast();
-  const [stats, setStats] = useState({ assistants: 0, tools: 0, flows: 0 });
-  const [activation, setActivation] = useState<ActivationStatus | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [statsError, setStatsError] = useState<string | null>(null);
   const [apiKeyPreview, setApiKeyPreview] = useState('');
   const [apiKeyCopied, setApiKeyCopied] = useState(false);
+
+  // These four used to run strictly in sequence, so the page cost four round trips before it could
+  // paint. Only flows and activation actually depend on the assistant list; tools never did.
+  const assistantsQuery = useAssistants();
+  const assistants = assistantsQuery.data;
+  const toolsQuery = useTools();
+  const flowsQuery = useFlowCounts(assistants);
+
+  const activeAssistant = useMemo(() => {
+    if (!assistants || assistants.length === 0) return undefined;
+    const stored = getActiveAssistantId();
+    return assistants.find((a) => a.id === stored) || assistants[0];
+  }, [assistants]);
+
+  const activationQuery = useActivation(activeAssistant?.id);
+
+  useEffect(() => {
+    if (activeAssistant) setActiveAssistant(activeAssistant);
+  }, [activeAssistant]);
+
+  const hasAssistants = (assistants?.length ?? 0) > 0;
+  const stats = {
+    assistants: assistants?.length ?? 0,
+    tools: hasAssistants ? toolsQuery.data?.length ?? 0 : 0,
+    flows: hasAssistants ? flowsQuery.data ?? 0 : 0,
+  };
+  const activation = hasAssistants ? activationQuery.data ?? null : null;
+  const loading = assistantsQuery.isLoading;
+  const statsError = assistantsQuery.error
+    ? assistantsQuery.error instanceof Error
+      ? assistantsQuery.error.message
+      : 'Failed to load dashboard'
+    : null;
 
   useEffect(() => {
     const syncKey = () => {
@@ -38,40 +66,6 @@ export default function DashboardPage() {
     };
   }, []);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        setStatsError(null);
-        const userId = readStoredUserId();
-        if (!userId) {
-          throw new Error('Missing signed-in user');
-        }
-        const assistants = await assistantsApi.list(userId);
-        if (assistants.length === 0) {
-          setStats({ assistants: 0, tools: 0, flows: 0 });
-          setActivation(null);
-          return;
-        }
-        const stored = getActiveAssistantId();
-        const active =
-          assistants.find((a) => a.id === stored) || assistants[0];
-        setActiveAssistant(active);
-        const tools = await toolsApi.list();
-        const flowLists = await Promise.all(
-          assistants.map((a) => flowsApi.list(a.id).catch(() => [])),
-        );
-        const flows = flowLists.reduce((sum, list) => sum + list.length, 0);
-        setStats({ assistants: assistants.length, tools: tools.length, flows });
-        setActivation(await activationApi.get(active.id).catch(() => null));
-      } catch (error) {
-        const msg = error instanceof Error ? error.message : 'Failed to load dashboard';
-        setStatsError(msg);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStats();
-  }, []);
 
   const copyApiKey = async () => {
     const result = await copyStoredAccountApiKey();

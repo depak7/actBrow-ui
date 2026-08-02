@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { assistantsApi } from '@/lib/api';
+import { useAssistants } from '@/lib/queries';
 import type { Assistant } from '@/types';
 import {
   getActiveAssistantId,
@@ -11,50 +11,44 @@ import {
 } from '@/lib/session';
 
 export function ActiveAssistantSelect({ className = '' }: { className?: string }) {
-  const [assistants, setAssistants] = useState<Assistant[]>([]);
+  // Shares the cached query with whichever page is open, instead of issuing a second identical
+  // request for the same list on every navigation.
+  const { data, isSuccess, isError } = useAssistants();
+  const assistants: Assistant[] = data ?? [];
   const [selectedId, setSelectedId] = useState('');
+  // The query is disabled when there is no signed-in user, in which case it never settles.
+  const noUser = typeof window !== 'undefined' && !readStoredUserId();
 
   useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      try {
-        const userId = readStoredUserId();
-        if (!userId) return;
-        const list = await assistantsApi.list(userId);
-        if (cancelled) return;
-        setAssistants(list);
-        const stored = getActiveAssistantId();
-        const next =
-          (stored && list.some((a) => a.id === stored) && stored) ||
-          list[0]?.id ||
-          '';
-        setSelectedId(next);
-        if (next && next !== stored) {
-          const assistant = list.find((a) => a.id === next);
-          if (assistant) setActiveAssistant(assistant);
-        }
-        if (stored && list.length > 0 && !list.some((a) => a.id === stored)) {
-          clearOrSetFirst(list);
-        }
-      } catch {
-        // layout can show empty selector
-      } finally {
-        // Always announce that the list settled — including the empty and failed cases. Pages key
-        // their "create an assistant first" empty state off this; without it a brand-new account
-        // would wait on a loading skeleton that never resolves.
-        if (!cancelled) markAssistantsResolved();
-      }
-    };
-    void load();
+    // Announce that the list settled — including the empty, failed and no-user cases. Pages key
+    // their "create an assistant first" empty state off this; without it an account with no
+    // assistants would wait on a loading skeleton that never resolves.
+    if (noUser) {
+      markAssistantsResolved();
+      return;
+    }
+    if (!isSuccess && !isError) return;
+    const list = data ?? [];
+    const stored = getActiveAssistantId();
+    const next = (stored && list.some((a) => a.id === stored) && stored) || list[0]?.id || '';
+    setSelectedId(next);
+    if (next && next !== stored) {
+      const assistant = list.find((a) => a.id === next);
+      if (assistant) setActiveAssistant(assistant);
+    }
+    if (stored && list.length > 0 && !list.some((a) => a.id === stored)) {
+      clearOrSetFirst(list);
+    }
+    markAssistantsResolved();
+  }, [data, isSuccess, isError, noUser]);
+
+  useEffect(() => {
     const onChange = () => {
       const stored = getActiveAssistantId();
       if (stored) setSelectedId(stored);
     };
     window.addEventListener('actbrow-active-assistant-changed', onChange);
-    return () => {
-      cancelled = true;
-      window.removeEventListener('actbrow-active-assistant-changed', onChange);
-    };
+    return () => window.removeEventListener('actbrow-active-assistant-changed', onChange);
   }, []);
 
   const clearOrSetFirst = (list: Assistant[]) => {
