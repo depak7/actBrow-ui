@@ -39,6 +39,20 @@ export const PRESETS: ThemePreset[] = [
     },
   },
   {
+    id: 'graphite',
+    name: 'Graphite',
+    // The widget's original prefers-color-scheme:dark palette — flat neutral grey with no colour
+    // cast. Kept as a preset because it is what the widget looked like before themes existed, and
+    // it is the safest fit for hosts whose own UI is already dark.
+    theme: {
+      accent: '#e5e5e5',
+      background: '#1e1e1e',
+      panelBackground: '#1e1e1e',
+      text: '#e5e5e5',
+      launcherBackground: '#1a1a1a',
+    },
+  },
+  {
     id: 'ocean',
     name: 'Ocean',
     theme: {
@@ -137,4 +151,14 @@ export function contrastRatio(foreground: string, background: string): number | 
   const lighter = Math.max(fg, bg);
   const darker = Math.min(fg, bg);
   return (lighter + 0.05) / (darker + 0.05);
+}
+
+/**
+ * Black or white, whichever stays readable on the given colour. Mirrors `readableOn` in
+ * actbrow-sdk.js so the preview shows the same foreground the shipped widget will pick.
+ */
+export function readableTextOn(color: string): string {
+  const lum = luminance(color);
+  if (lum === null) return '#fff';
+  return lum > 0.45 ? '#000' : '#fff';
 }

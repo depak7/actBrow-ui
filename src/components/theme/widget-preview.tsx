@@ -1,7 +1,7 @@
 'use client';
 
 import type { WidgetTheme } from '@/types';
-import { BRAND_TITLE, DEFAULT_THEME } from './theme-presets';
+import { BRAND_TITLE, DEFAULT_THEME, readableTextOn } from './theme-presets';
 
 /**
  * Mirrors the real widget's structure (launcher, header, message rows, composer) so operators judge
@@ -14,6 +14,8 @@ export function WidgetPreview({ theme, open }: { theme: WidgetTheme; open: boole
   const launcher = String(theme.launcherBackground || DEFAULT_THEME.launcherBackground);
   const font = String(theme.fontFamily || DEFAULT_THEME.fontFamily);
   const left = theme.launcherPosition === 'bottom-left';
+  // Same rule the widget applies, so a pale accent previews with dark text rather than lying.
+  const onAccent = readableTextOn(accent);
 
   return (
     <div className="relative h-[26rem] overflow-hidden rounded-xl border border-white/10 bg-[radial-gradient(circle_at_30%_20%,#2a2a3a_0%,#141420_60%)]">
@@ -59,7 +61,7 @@ export function WidgetPreview({ theme, open }: { theme: WidgetTheme; open: boole
             <div className="flex justify-end">
               <div
                 className="max-w-[80%] rounded-2xl px-2.5 py-1.5 text-[11px]"
-                style={{ background: accent, color: '#fff' }}
+                style={{ background: accent, color: onAccent }}
               >
                 Take me to billing
               </div>
@@ -84,7 +86,7 @@ export function WidgetPreview({ theme, open }: { theme: WidgetTheme; open: boole
               </span>
               <span
                 className="flex h-5 w-5 items-center justify-center rounded-lg text-[10px] font-bold"
-                style={{ background: accent, color: '#fff' }}
+                style={{ background: accent, color: onAccent }}
               >
                 ↑
               </span>
