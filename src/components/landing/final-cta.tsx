@@ -57,8 +57,9 @@ export function FinalCta() {
 
             {/* Subhead */}
             <p className="text-lg text-neutral-400 max-w-2xl mx-auto leading-relaxed">
-              Two script tags. Users ask. ActBrow navigates and acts. Start free
-              in minutes — or book a walkthrough.
+              Two script tags. Users ask. ActBrow finishes the task — so they
+              don&apos;t stall or leave. Start free in minutes — or book a
+              walkthrough.
             </p>
 
             {/* CTA buttons */}

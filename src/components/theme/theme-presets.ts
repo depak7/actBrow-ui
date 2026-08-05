@@ -15,7 +15,7 @@ export const DEFAULT_THEME: WidgetTheme = {
   launcherBackground: '#1a1a1a',
   launcherPosition: 'bottom-right',
   title: BRAND_TITLE,
-  subtitle: 'Ask, navigate, and act inside this app',
+  subtitle: 'Ask — finish the work inside this app',
   fontFamily: "'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
 };
 

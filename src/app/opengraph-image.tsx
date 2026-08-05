@@ -71,7 +71,7 @@ export default function OpenGraphImage() {
               maxWidth: 860,
             }}
           >
-            Users ask in plain English. ActBrow navigates, calls your APIs, and completes the task.
+            When users stall or leave, finish the task in-product — navigate, call APIs, done.
           </div>
         </div>
 

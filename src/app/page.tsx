@@ -85,11 +85,11 @@ export default function LandingPage() {
                 30-second walkthrough
               </div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">
-                Watch a user finish a task without clicking
+                Watch a user finish a task without learning your UI
               </h2>
               <p className="text-lg leading-relaxed text-neutral-400">
-                One ask in chat → navigate → API call → done. Same flow you embed
-                in your own app.
+                Skip the click-hunt and the bounce. One ask in chat → navigate →
+                API call → the work is done. Same flow you embed in your own app.
               </p>
             </div>
 
@@ -115,7 +115,8 @@ export default function LandingPage() {
                 </h2>
                 <p className="text-lg leading-relaxed text-neutral-400">
                   Keep your stack as-is. Skip the rewrite. Follow three steps —
-                  then people ask in chat and ActBrow handles the clicking.
+                  then people ask in chat and ActBrow finishes the work so they
+                  never have to learn the path.
                 </p>
 
                 <ol className="space-y-5">

@@ -17,7 +17,7 @@ export const SITE_TAGLINE =
   'Chat that finishes the work inside your product';
 
 export const SITE_DESCRIPTION =
-  'Support tools automate the ticket. ActBrow automates the task inside your product. Users ask in plain English, then it navigates to the right screen and calls your APIs to finish the request.';
+  'When users do not know how, they stall or leave. ActBrow finishes the task inside your product: they ask in plain English, it navigates to the right screen, calls your APIs, and the work is done.';
 
 /** Absolute URL for a site-relative path (leading slash optional). */
 export function absoluteUrl(path = '/'): string {

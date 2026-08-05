@@ -149,7 +149,9 @@ export default function BookADemoPage() {
               Book a demo
             </h1>
             <p className="text-xl text-neutral-400 leading-relaxed">
-              See chat that finishes work inside a real app — navigate, call APIs, done. Tell me about your product and I&apos;ll reach out personally to set up a walkthrough.
+              See chat that finishes work inside a real app — so users don&apos;t
+              stall on setup or bounce. Tell me about your product and I&apos;ll
+              reach out personally to set up a walkthrough.
             </p>
             <p className="text-sm text-neutral-500">
               Want to try yourself first?{' '}
@@ -166,7 +168,7 @@ export default function BookADemoPage() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-white mb-1">See it finish a task</h3>
-                <p className="text-neutral-400 text-sm">I&apos;ll reach out in person and show ActBrow navigate and act live — not a canned recording.</p>
+                <p className="text-neutral-400 text-sm">I&apos;ll reach out in person and show a real workflow finished in-product — not a canned recording.</p>
               </div>
             </div>
 
@@ -249,7 +251,7 @@ export default function BookADemoPage() {
                   id="useCase"
                   value={formData.useCase}
                   onChange={(e) => setFormData({ ...formData, useCase: e.target.value })}
-                  placeholder="e.g. onboarding help inside our SaaS, or replace Intercom for in-app how-do-I questions..."
+                  placeholder="e.g. users bounce on setup; finish onboarding workflows in-product without forcing them to learn the UI..."
                   className="flex min-h-[100px] w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-neutral-500 focus:border-white focus:outline-none focus:ring-1 focus:ring-white/20"
                 />
               </div>

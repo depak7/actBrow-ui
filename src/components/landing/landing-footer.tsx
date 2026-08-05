@@ -59,8 +59,8 @@ export function LandingFooter() {
               <BrandLogo />
             </Link>
             <p className="max-w-xs text-sm leading-relaxed text-neutral-400">
-              Chat that finishes the work inside your product — navigates,
-              calls APIs, done.
+              Chat that finishes the work inside your product — so users
+              don&apos;t stall or leave.
             </p>
             <ScrollLaunchBadge />
             <p className="text-xs text-neutral-600">© ActBrow</p>

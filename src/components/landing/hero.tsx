@@ -68,11 +68,11 @@ export function Hero() {
             <span className="text-gradient-accent">inside your product.</span>
           </h1>
 
-          {/* Subhead — who + how + vs status quo, one breath */}
+          {/* Subhead — stall/leave vs finish, one breath */}
           <p className="animate-fade-in-up animate-fade-in-up-delay-2 mx-auto mt-6 max-w-xl text-base leading-relaxed text-neutral-400 md:text-lg">
-            Support tools automate the ticket. ActBrow automates the task
-            inside your product. Users ask in plain English, then it navigates
-            to the right screen and calls your APIs to finish the request.
+            When users don&apos;t know how, they stall or leave. ActBrow
+            finishes the task inside your product: they ask in plain English, it
+            navigates, calls your APIs, and the work is done.
           </p>
 
           {/* CTAs */}
@@ -258,7 +258,7 @@ export function Hero() {
                         </span>
                       </div>
                       <p className="mt-0.5 truncate text-[11px] text-neutral-500">
-                        Ask, navigate, and act inside this app
+                        Ask — finish the work inside this app
                       </p>
                     </div>
                     <button className="shrink-0 rounded-md px-2 py-1 text-[10px] text-neutral-500 hover:bg-white/5">
@@ -319,7 +319,7 @@ export function Hero() {
                   <div className="border-t border-white/10 px-3 pb-2.5 pt-3">
                     <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
                       <span className="flex-1 truncate text-[11px] text-neutral-600">
-                        Ask me to navigate or help with what&apos;s on this page
+                        Ask me to finish something in this app
                       </span>
                       <div className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-500">
                         <Send className="h-3 w-3 text-neutral-950" />

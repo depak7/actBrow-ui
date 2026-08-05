@@ -70,7 +70,7 @@ function WidgetHeader() {
         </div>
         {/* Row 2: subtitle */}
         <span className="truncate text-[11px] leading-none text-neutral-500">
-          Ask, navigate, and act inside this app
+          Ask — finish the work inside this app
         </span>
       </div>
 
@@ -90,7 +90,7 @@ function WidgetFooter({ placeholder }: { placeholder?: string }) {
     <div className="border-t border-white/10 px-3 py-3">
       <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
         <span className="flex-1 text-[11px] text-neutral-600">
-          {placeholder ?? "Ask me to navigate or help with what's on this page"}
+          {placeholder ?? 'Ask me to finish something in this app'}
         </span>
         <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-500/20">
           <Send className="h-3 w-3 text-emerald-400" />
@@ -315,56 +315,70 @@ function TabViewport({ conv }: { conv: ConversationConfig }) {
 const TABS: Tab[] = [
   {
     id: 0,
-    icon: Navigation,
-    label: 'Navigates your app',
-    caption: 'Reads page context and navigates to the right place.',
+    icon: Zap,
+    label: 'Finishes setup',
+    caption: 'Creates the event type — the list updates, not a how-to.',
     conversation: {
-      userMessage: 'Take me to my upcoming bookings.',
+      userMessage: 'Add a 30-minute intro call to my event types.',
       steps: [
-        { label: 'Navigate', chip: 'app.navigate → /bookings' },
-        { label: 'Locate booking', chip: 'path.find' },
+        { label: 'Navigate', chip: 'app.navigate → /event-types' },
+        { label: 'Create event type', chip: 'POST /api/v2/event-types' },
       ],
-      assistantMessage: "You're on Bookings — your Thursday calls are highlighted.",
+      assistantMessage: (
+        <>
+          Added <span className="font-medium text-white">&ldquo;30 Min Intro Call&rdquo;</span> —
+          your booking link is{' '}
+          <span className="font-mono text-emerald-300">cal.com/you/30min-intro</span>.
+        </>
+      ),
     },
   },
   {
     id: 1,
-    icon: Zap,
-    label: 'Calls your APIs',
-    caption: 'Any REST endpoint becomes a typed tool — server-side or same-origin.',
+    icon: Navigation,
+    label: 'Completes the booking',
+    caption: 'Calls your API so the calendar event exists — no click-hunt.',
     conversation: {
       userMessage: 'Book a 30-min intro call with Maya on Thursday at 2pm.',
-      steps: [{ label: 'Create booking', chip: 'POST /api/v2/bookings' }],
-      assistantMessage: 'Booked — 30-min intro call with Maya, Thursday 2:00 PM. Confirmation sent.',
+      steps: [
+        { label: 'Navigate', chip: 'app.navigate → /bookings' },
+        { label: 'Create booking', chip: 'POST /api/v2/bookings' },
+      ],
+      assistantMessage:
+        'Booked — 30-min intro call with Maya, Thursday 2:00 PM. Confirmation sent.',
     },
   },
   {
     id: 2,
     icon: Workflow,
-    label: 'Follows flows',
-    caption: 'Phrase-triggered flows run multiple steps in order.',
+    label: 'Runs the workflow',
+    caption: 'Availability set, then the event type is live — setup finished.',
     conversation: {
-      userMessage: 'Set up my availability',
+      userMessage: 'Set up my availability and create a 30-min intro call.',
       suggestionChips: ['Set up my availability', 'Create an event type', 'Connect my calendar'],
       steps: [
         { label: 'Navigate', chip: 'app.navigate → /availability' },
-        { label: 'Navigate', chip: 'app.navigate → /event-types' },
-        { label: 'Open guide', chip: 'knowledge.search' },
+        { label: 'Save hours', chip: 'PATCH /api/v2/schedules' },
+        { label: 'Create event type', chip: 'POST /api/v2/event-types' },
       ],
       assistantMessage:
-        "Your weekly hours are set. Want me to create a 30-min intro call event next?",
+        'Weekly hours saved and "30 Min Intro Call" is live — share cal.com/you/30min-intro.',
     },
   },
   {
     id: 3,
     icon: BookOpen,
-    label: 'Knows your docs',
-    caption: 'Retrieves the most relevant docs on demand — keyword-scored.',
+    label: 'Applies the fix',
+    caption: 'Uses your docs to change the product — not to explain the menu.',
     conversation: {
-      userMessage: 'How do I add a buffer between meetings?',
-      steps: [{ label: 'Search knowledge', chip: 'knowledge.search' }],
+      userMessage: 'Add a 10-minute buffer after every meeting.',
+      steps: [
+        { label: 'Search knowledge', chip: 'knowledge.search' },
+        { label: 'Navigate', chip: 'app.navigate → /availability' },
+        { label: 'Set buffer', chip: 'PATCH /api/v2/schedules' },
+      ],
       assistantMessage:
-        'Go to Availability → Edit schedule → scroll to Event buffers. Set a before or after buffer for any event type. Changes apply to new bookings immediately.',
+        'Done — a 10-minute after-buffer is on your schedule. New bookings will respect it.',
       sourceCard: { title: 'Availability → Buffers', relevance: 'score 0.92' },
     },
   },
@@ -388,11 +402,11 @@ export function ProductDemo() {
           </div>
 
           <h2 className="text-3xl font-bold tracking-tight text-white md:text-5xl">
-            One ask. Navigate. Done.
+            One ask. Work finished.
           </h2>
           <p className="mt-4 max-w-2xl text-lg text-neutral-400">
-            This is the widget your users get. Click a tab to see navigating,
-            calling an API, running a flow, or answering from docs.
+            This is the widget your users get. Click a tab — each story ends with
+            a changed product state, not a tutorial.
           </p>
         </div>
 
