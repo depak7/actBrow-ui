@@ -42,6 +42,12 @@ export function RunTraceSummary({ trace }: { trace: RunTrace | null }) {
         />
         <TraceField label="Execution attempts" value={orDash(trace.executionAttempts)} />
         <TraceField label="Tool calls" value={orDash(trace.toolCallCount)} />
+        <TraceField label="page.observe" value={orDash(trace.observeCount)} />
+        <TraceField label="page.screenshot" value={orDash(trace.screenshotCount)} />
+        <TraceField
+          label="Client tool wait"
+          value={trace.clientToolWaitMs === null ? '—' : formatDuration(trace.clientToolWaitMs)}
+        />
         <TraceField label="Prompt version" value={orDash(trace.promptVersion)} />
         <TraceField label="Toolset version" value={orDash(trace.toolsetVersion)} />
       </dl>

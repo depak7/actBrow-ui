@@ -226,6 +226,12 @@ export interface RunTrace {
   verifierDecisions: string | null;
   executionAttempts: number | null;
   toolCallCount: number | null;
+  /** Structured page.observe tool calls in this run. */
+  observeCount: number | null;
+  /** page.screenshot tool calls (text alias or image fallback). */
+  screenshotCount: number | null;
+  /** Cumulative time the run thread parked waiting on client / browser-HTTP tools. */
+  clientToolWaitMs: number | null;
   finalOutcome: string | null;
   latencyMs: number | null;
   createdAt: string;
