@@ -93,9 +93,9 @@ export function Hero() {
               variant="outline"
               className="border border-white/15 bg-transparent text-white hover:bg-white/10"
             >
-              <Link href="#demo" className="flex items-center gap-2">
+              <Link href="/demo" className="flex items-center gap-2">
                 <Play className="h-4 w-4" />
-                Watch product demo
+                Try live demo
               </Link>
             </Button>
           </div>
