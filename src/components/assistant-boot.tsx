@@ -18,9 +18,10 @@ const PUBLIC_API_KEY = process.env.NEXT_PUBLIC_ACTBROW_PUBLIC_API_KEY ?? null;
  * describing it. Signed-in users see their own assistant's configured suggestions instead.
  */
 const PUBLIC_SUGGESTIONS = [
-  "How do I embedathis in my app?",
-  "Show me the React example",
-  "How do I self-host ActBrow?",
+  "How is this different from a chatbot?",
+  "What can it actually do in my app?",
+  "Can it call my APIs?",
+  "Is it open source?",
 ];
 /** Bump when actbrow-sdk.js changes so browsers fetch the latest bundle. */
 const SDK_ASSET_VERSION = "7";
