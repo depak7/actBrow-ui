@@ -3,7 +3,6 @@ import {
   Boxes,
   Bot,
   ArrowRight,
-  Play,
   Check,
   Navigation,
   Plus,
@@ -19,6 +18,7 @@ import {
   Link2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TryDemoButton } from "@/components/landing/try-demo-button";
 
 const CAL_NAV: { icon: React.ComponentType<{ className?: string }>; label: string; active?: boolean }[] = [
   { icon: LayoutGrid, label: "Event Types", active: true },
@@ -87,17 +87,7 @@ export function Hero() {
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="border border-white/15 bg-transparent text-white hover:bg-white/10"
-            >
-              <Link href="/demo" className="flex items-center gap-2">
-                <Play className="h-4 w-4" />
-                Try live demo
-              </Link>
-            </Button>
+            <TryDemoButton />
           </div>
           <p className="animate-fade-in-up animate-fade-in-up-delay-2 mt-4 text-sm text-neutral-500">
             Prefer a walkthrough?{' '}

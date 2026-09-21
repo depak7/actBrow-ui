@@ -14,8 +14,9 @@ const PUBLIC_ASSISTANT_ID = process.env.NEXT_PUBLIC_ACTBROW_PUBLIC_ASSISTANT_ID 
 const PUBLIC_API_KEY = process.env.NEXT_PUBLIC_ACTBROW_PUBLIC_API_KEY ?? null;
 /**
  * Starter prompts for anonymous visitors, who have no reason to guess what the widget can do. Each
- * one resolves to a real route on this site, so the answer demonstrates navigation rather than
- * describing it. Signed-in users see their own assistant's configured suggestions instead.
+ * is answered straight from the assistant's knowledge documents, so a click produces an answer in
+ * the panel rather than a page change. The SDK renders at most four, and only in the empty state.
+ * Signed-in users see their own assistant's configured suggestions instead.
  */
 const PUBLIC_SUGGESTIONS = [
   "How is this different from a chatbot?",
@@ -37,12 +38,40 @@ export default function AssistantBoot() {
   const [sdkLoaded, setSdkLoaded] = useState(false);
   /** Identity the mounted widget was built with, so a change can force a remount. */
   const mountedIdentity = useRef<string | null>(null);
-  const baseUrl =
-    process.env.NEXT_PUBLIC_ACTBROW_BASE_URL?.replace(/\/$/, "") ??
-    DEFAULT_BASE;
+  // Normalised rather than used raw: a dashboard env var is hand-pasted, and a stray leading "="
+  // or a wrapping quote turns the script src into a relative path that 404s against the site's own
+  // origin, leaving no widget and no obvious cause.
+  const rawBase = process.env.NEXT_PUBLIC_ACTBROW_BASE_URL?.trim()
+    .replace(/^=+/, "")
+    .replace(/^["']|["']$/g, "")
+    .replace(/\/+$/, "");
+  const baseUrl = rawBase || DEFAULT_BASE;
+  const baseUrlIsAbsolute = /^https?:\/\//i.test(baseUrl);
 
   useEffect(() => {
     const syncConfig = () => {
+      // DEFAULT_BASE is a dev convenience. On a deployed origin it points the browser at the
+      // visitor's own machine, where the request is blocked as a private-network access and the
+      // widget silently never mounts. Fail loudly instead of shipping a dead widget.
+      const host = window.location.hostname;
+      const isLocalHost = host === "localhost" || host === "127.0.0.1" || host === "[::1]";
+      if (!rawBase && !isLocalHost) {
+        console.error(
+          `[actbrow] NEXT_PUBLIC_ACTBROW_BASE_URL is not set, so the widget would load from ` +
+          `${DEFAULT_BASE}, which no deployed visitor can reach. Set it to your ActBrow backend ` +
+          `URL and redeploy.`);
+        setReady(false);
+        return;
+      }
+      if (!baseUrlIsAbsolute) {
+        console.error(
+          `[actbrow] NEXT_PUBLIC_ACTBROW_BASE_URL is "${baseUrl}", which is not an absolute ` +
+          `http(s) URL. The SDK would be requested relative to this site and 404. Set it to your ` +
+          `ActBrow backend URL, e.g. https://actbrow-backend.example.com, and redeploy.`);
+        setReady(false);
+        return;
+      }
+
       // Signed-in visitors drive the widget with their own assistant; everyone else falls back to
       // the public demo assistant so the marketing site is itself a live trial of the product.
       const ownAssistantId =
