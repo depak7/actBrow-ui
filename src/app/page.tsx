@@ -95,7 +95,7 @@ export default function LandingPage() {
 
             <div className="mx-auto max-w-5xl">
               <div className="card-sheen relative overflow-hidden rounded-2xl border border-white/10 bg-black/50 shadow-elevated">
-                <DemoVideo embedUrl={DEMO_VIDEO_EMBED_URL} fileUrl={DEMO_VIDEO_FILE_URL} />
+                <DemoVideo embedUrl={DEMO_VIDEO_EMBED_URL} fileUrl={DEMO_VIDEO_FILE_URL} htmlUrl="/teaser.html" />
               </div>
             </div>
           </div>

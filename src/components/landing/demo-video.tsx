@@ -8,7 +8,19 @@ interface DemoVideoProps {
   embedUrl?: string;
   /** Direct MP4/WebM URL (used when embed URL is not set) */
   fileUrl?: string;
+  /**
+   * Self-contained HTML teaser served from /public (used when neither video URL is
+   * set). It is the same asset used for the launch video, so the page and the
+   * recording never drift apart.
+   */
+  htmlUrl?: string;
 }
+
+/**
+ * Bumped whenever public/teaser.html changes. The teaser is a static asset, so
+ * browsers and CDNs cache it hard; without this, viewers keep the old cut.
+ */
+const TEASER_VERSION = '3';
 
 /** Append a query param to a URL without clobbering existing ones. */
 function withParam(url: string, key: string, value: string): string {
@@ -22,7 +34,7 @@ function withParam(url: string, key: string, value: string): string {
  * leaves the viewport. It never autoplays on initial page load because the
  * section sits below the fold.
  */
-export function DemoVideo({ embedUrl, fileUrl }: DemoVideoProps) {
+export function DemoVideo({ embedUrl, fileUrl, htmlUrl }: DemoVideoProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   // For iframe embeds: only mount the player once the section is in view, and
@@ -97,6 +109,38 @@ export function DemoVideo({ embedUrl, fileUrl }: DemoVideoProps) {
           <source src={fileUrl} type="video/mp4" />
           Your browser does not support embedded video.
         </video>
+      </div>
+    );
+  }
+
+  // ── Self-contained HTML teaser ──
+  if (htmlUrl) {
+    return (
+      <div ref={containerRef} className="relative aspect-video w-full">
+        {inView ? (
+          <iframe
+            title="ActBrow product teaser"
+            // rec=1 skips the teaser's own start screen; it exposes window.play()
+            // so playback begins from the top each time the section scrolls in.
+            src={`${htmlUrl}?rec=1&v=${TEASER_VERSION}`}
+            className="absolute inset-0 h-full w-full border-0"
+            onLoad={(e) => {
+              // Same origin, so the teaser's play() is reachable. If a browser ever
+              // blocks it, the teaser still renders its first frame.
+              try {
+                (e.currentTarget.contentWindow as unknown as { play?: () => void })?.play?.();
+              } catch {
+                /* cross-origin or not ready — leave the static first frame */
+              }
+            }}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-white/[0.06] to-white/[0.02]">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white">
+              <Play className="ml-1 h-8 w-8" fill="currentColor" />
+            </div>
+          </div>
+        )}
       </div>
     );
   }
